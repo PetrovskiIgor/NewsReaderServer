@@ -27,8 +27,16 @@ def crawl():
 def getLinks():
 
     newsPosts = crawler.takeNewsPosts()
+    str = ''
+    for np in newsPosts:
+        str += np.title + '\n';
 
-    str = '\n'.join([np.title for np in newsPosts])
+        pairs = sorted([(word, np.dict_tf_idf[word]) for word in np.dict_tf_idf], key=lambda x:-x[1])
+
+        for pair in pairs[0:10]:
+            str += '%s %f\n' % (pair[0], pair[1])
+
+        str += '\n'
 
     return Response(str, mimetype='text/plain')
 
