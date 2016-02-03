@@ -10,6 +10,7 @@ class NewsPost(ndb.Model):
     dictWords = ndb.PickleProperty()
     dict_tf_idf = ndb.PickleProperty()
     numWords = ndb.IntegerProperty()
+    words = ndb.PickleProperty()
 
     #def __init__(self, host_page, url, title, dictWords, numWords):
     #    self.host_page = host_page
@@ -43,6 +44,6 @@ class NewsPost(ndb.Model):
 
     @classmethod
     def query_newspost(cls, ancestor_key):
-        return cls.query(ancestor=ancestor_key)
+        return cls.query().filter(ancestor = ancestor_key)
 
 

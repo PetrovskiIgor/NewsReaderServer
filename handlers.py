@@ -4,12 +4,16 @@ from flask import  Response
 
 
 
-import crawler
 
+import crawler
+import classification
+import clustering
 app = Flask(__name__)
 # Note: We don't need to call run() since our application is embedded within
 # the App Engine WSGI application server.
-
+import  naivebayes_classification
+import  test_classifications
+from cPickle import Unpickler
 
 @app.route('/')
 def hello():
@@ -19,9 +23,9 @@ def hello():
 
 @app.route('/crawl_me_some_pages')
 def crawl():
-    crawler.crawlThem()
+    res = crawler.crawlThem()
 
-    return 'good!'
+    return Response(res, mimetype='text/plain')
 
 @app.route('/get_me_some_links')
 def getLinks():
@@ -39,6 +43,146 @@ def getLinks():
         str += '\n'
 
     return Response(str, mimetype='text/plain')
+
+
+@app.route('/get_clusters')
+def getClusters():
+    feedback = ''
+    str = ''
+    try:
+        newsPosts = crawler.takeNewsPosts()
+
+        feedback += 'took the newsposts \n'
+
+        counter = 0
+
+        for np in newsPosts:
+            counter += 1
+
+        feedback += 'num newsposts: %d\n' % counter
+
+        #return Response('%d' % counter, mimetype='text/plain')
+        clusters, innerfeedback = clustering.cluster_news(newsPosts)
+        feedback += '%s\n' % innerfeedback
+
+        feedback += 'done the clustering\n'
+        i = 0
+        for c in clusters:
+            newsInCluster = c.posts
+            str += 'cluster %d\n' % i
+            for np in newsInCluster:
+                str += ' \t %s\n' % np.title
+
+            str += '\n'
+
+            i += 1
+
+        str += feedback
+    except Exception as inst:
+        feedback += 'Exception type: %s\n' % (type(inst))
+        feedback += 'Exception: %s\n' % (inst.message)
+
+    str += feedback
+    return Response(str, mimetype='text/plain')
+
+@app.route('/get_categories')
+def getCategories():
+
+    newsPosts = crawler.takeNewsPosts()
+
+    categories = classification.classify_posts(newsPosts)
+    #str = ''
+    #for cat in categories:
+    #    str += '%s\n' % cat
+    #
+    #    for newsPost in categories[cat]:
+    #       str += '\t%s\n' % newsPost.title
+    #
+    #    str += '\n'
+
+    str = '%d\n' % len(categories)
+
+    for cat in categories:
+        str += '%s %d\n' % (cat, len(categories[cat]))
+
+
+    for cat in categories:
+        str += '%s\n' % cat
+
+        for np in categories[cat]:
+            str += '\t%s\n' % np.title
+
+        str += '\n'
+
+    return Response(str, mimetype='text/plain')
+
+
+@app.route('/getNewsPosts')
+def getNewsPosts():
+
+    newsPosts = crawler.takeNewsPosts()
+
+    str = ''
+    i = 0
+    for np in newsPosts:
+        str += '%d: %s\n' % (i , np.title)
+        i += 1
+
+
+    return Response(str, mimetype='text/plain')
+
+
+
+@app.route('/get_classification_naivebayes')
+def getCategoriesNB():
+
+    response = ''
+    feedback = ''
+    try:
+        newsPosts = crawler.takeNewsPosts()
+
+
+        fileToRead = open(naivebayes_classification.str_dict_word_in_cat)
+        dict_words = Unpickler(fileToRead).load()
+        fileToRead.close()
+
+        fileToRead = open(naivebayes_classification.str_dict_cat_count)
+        dict_cats = Unpickler(fileToRead).load()
+        fileToRead.close()
+
+        fileToRead = open(naivebayes_classification.str_dict_priors)
+        dict_priors = Unpickler(fileToRead).load()
+        fileToRead.close()
+
+
+        dict_results = {}
+
+        for np in newsPosts:
+            #words, dict_words, dict_cats, dict_priors
+            category = test_classifications.get_NB_category(np.words, dict_words, dict_cats, dict_priors)
+
+            dict_results.setdefault(category, [])
+            dict_results[category].append(np)
+
+        response += 'number of documents: %d\n' % (len(newsPosts))
+        for cat in dict_results:
+            response += '%s\t\t%d\n' % (cat, len(dict_results.get(cat, [])))
+
+        for cat in dict_results:
+            response += '%s\n' % cat
+            for np in dict_results[cat]:
+                response += '\t%s\n' % np.title
+            response += '\n'
+
+
+    except Exception as inst:
+        feedback += 'Exception type: %s\n' % type(inst)
+        feedback += 'Exception: %s\n' % inst.message
+
+    response += feedback
+    return Response(response, mimetype='text/plain')
+
+
 
 
 

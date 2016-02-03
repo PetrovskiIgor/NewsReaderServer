@@ -1,0 +1,5 @@
+cron:
+- description: crawl pages
+  url: /crawl_me_some_pages
+  schedule: every 10 minutes
+  target: module1
