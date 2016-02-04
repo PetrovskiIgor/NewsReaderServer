@@ -1,7 +1,7 @@
 #encoding=utf-8
 
 from google.appengine.ext import ndb
-
+import math
 class NewsPost(ndb.Model):
 
     url = ndb.StringProperty()
@@ -38,6 +38,12 @@ class NewsPost(ndb.Model):
 
             val_idf = dictIDF.get(word, None)
             if val_idf is not None:
+
+                if tf > 0:
+                    tf = 1 + math.log10(tf)
+                else:
+                    tf = 0
+
                 tf_idf = val_idf * tf
                 self.dict_tf_idf[word] = tf_idf
 

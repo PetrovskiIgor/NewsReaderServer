@@ -124,7 +124,7 @@ def crawlThem():
     str = ''
     newsPosts = []
 
-    for source in sources[0:1]:
+    for source in sources[2:]:
         newList, feedback = getNewsPosts(source, dictIDF)
         newsPosts.extend(newList)
         str += feedback

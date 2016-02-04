@@ -14,6 +14,10 @@ app = Flask(__name__)
 import  naivebayes_classification
 import  test_classifications
 from cPickle import Unpickler
+from Cluster import Cluster
+
+from flask import request
+from NewsPostClient import  NewsPostClient
 
 @app.route('/')
 def hello():
@@ -52,14 +56,21 @@ def getClusters():
     try:
         newsPosts = crawler.takeNewsPosts()
 
+        fileToRead = open(naivebayes_classification.str_dict_word_in_cat)
+        dict_words = Unpickler(fileToRead).load()
+        fileToRead.close()
+
+        fileToRead = open(naivebayes_classification.str_dict_cat_count)
+        dict_cats = Unpickler(fileToRead).load()
+        fileToRead.close()
+
+        fileToRead = open(naivebayes_classification.str_dict_priors)
+        dict_priors = Unpickler(fileToRead).load()
+        fileToRead.close()
+
         feedback += 'took the newsposts \n'
 
-        counter = 0
 
-        for np in newsPosts:
-            counter += 1
-
-        feedback += 'num newsposts: %d\n' % counter
 
         #return Response('%d' % counter, mimetype='text/plain')
         clusters, innerfeedback = clustering.cluster_news(newsPosts)
@@ -69,10 +80,37 @@ def getClusters():
         i = 0
         for c in clusters:
             newsInCluster = c.posts
+
+
             str += 'cluster %d\n' % i
+
+            #implementing the majority voting
+
+            votes_cat = {}
+
             for np in newsInCluster:
                 str += ' \t %s\n' % np.title
+                category = test_classifications.get_NB_category(np.words,dict_words, dict_cats, dict_priors)
+                votes_cat[category] = 1 + votes_cat.get(category, 0)
 
+            maxVotes = 0
+            maxCat = ''
+
+            for cat in votes_cat:
+                if votes_cat[cat] > maxVotes:
+                    maxVotes = votes_cat[cat]
+                    maxCat = cat
+
+            str += '^^^ CLUSTER CATEGORY: %s\n' % maxCat
+
+            listNews = []
+            for np in  c.posts:
+                newNews = NewsPostClient(url = np.url, host_page = np.host_page, title = np.title, numWords = np.numWords)
+                listNews.append(newNews)
+
+            newCluster = Cluster(category = maxCat, listNews = listNews)
+            newCluster.put()
+            
             str += '\n'
 
             i += 1
@@ -181,6 +219,41 @@ def getCategoriesNB():
 
     response += feedback
     return Response(response, mimetype='text/plain')
+
+
+@app.route('/get_clusters_with_cat')
+def  getClustersWithCat():
+    feedback = ''
+    str = ''
+    try:
+        category = request.args.get('category')
+
+        str += 'got parameter category: %s\n' % category
+        clusters = Cluster.query(Cluster.category == category).fetch()
+        str += 'fetched the clusters'
+        str = ''
+        i = 1
+        for c in clusters:
+            str += 'cluster %d:\n' % i
+            str += 'category: %s\n' % c.category
+
+
+            for np in c.listNews:
+                str += '\t%s\n' % np.title
+
+
+            str += '\n'
+
+
+            i+= 1
+
+    except Exception as inst:
+            feedback += 'Exception type: %s\n' % type(inst)
+            feedback += 'Exception: %s\n' % inst.message
+
+    str += feedback
+
+    return Response(str, mimetype='text/plain')
 
 
 
