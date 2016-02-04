@@ -29,7 +29,23 @@ sources = ['http://vecer.mk/rss.xml', 'http://puls24.mk/rss-feed', 'http://www.c
 
 
 
+sources_config = {'http://kurir.mk/feed/': [-1],
+                  'http://press24.mk/taxonomy/term/7/feed': [-1],
+                  'http://press24.mk/taxonomy/term/3/feed': [-1],
+                  'http://novatv.mk/rss': [0],
+                  'http://puls24.mk/rss-feed': [0,0],
+                  'http://vecer.mk/rss.xml': [-1],
+                  'http://www.telegraf.mk/telegrafrss': [-1,-1]
+                  }
+def filterTitles(words, source):
 
+    if source not in sources_config:
+        return words
+
+    for index in sources_config[source]:
+        del words[index]
+
+    return words
 
 def getNewsPosts(web_page_url, dictIDF):
 
@@ -61,7 +77,10 @@ def getNewsPosts(web_page_url, dictIDF):
 
                 feedback += 'item title %s\n' % title
 
-                totalWords = [] #Utility.getWords(' '.join([title, title]))
+                titleWords = Utility.getWords(title)
+
+                titleWords = filterTitles(titleWords, web_page_url)
+                totalWords = titleWords #Utility.getWords(' '.join([title, title]))
 
                 dictNews = {}
 
@@ -79,20 +98,16 @@ def getNewsPosts(web_page_url, dictIDF):
 
                 # OBAVEZNO DA SE OPFATI SLUCAJOT KADE SE ZEMAAT VO PREDVID DUPLIKATI !!!
 
-                #feedback += 'getting the key.. \n'
-                #prevent from adding duplicates
-                #myKey = ndb.Key('NewsPost', linkUrl)
+                howMuch = NewsPost.query(NewsPost.url == linkUrl).fetch()
 
-               # howMuch = NewsPost.query(myKey)
-
-                #if howMuch is None:
-                #    feedback += 'howMuch is none\n'
-                #else:
-                #    feedback += 'howMuch is NOT none\n'
+                if howMuch is None:
+                    feedback += 'howMuch is none\n'
+                else:
+                    feedback += 'howMuch is NOT none\n'
 
 
-                #if howMuch is not None and len(howMuch) > 0:
-                #    continue
+                if howMuch is not None and len(howMuch) > 0:
+                    continue
 
 
                  # dictNews, title, link, host_page
@@ -117,6 +132,8 @@ def getNewsPosts(web_page_url, dictIDF):
 
 def crawlThem():
 
+
+
     fileToRead = open('dict_idf')
     dictIDF = Unpickler(fileToRead).load()
     fileToRead.close()
@@ -124,7 +141,7 @@ def crawlThem():
     str = ''
     newsPosts = []
 
-    for source in sources[2:]:
+    for source in sources[1:]:
         newList, feedback = getNewsPosts(source, dictIDF)
         newsPosts.extend(newList)
         str += feedback

@@ -2,6 +2,7 @@
 
 from google.appengine.ext import ndb
 import math
+
 class NewsPostClient(ndb.Model):
 
     url = ndb.StringProperty()

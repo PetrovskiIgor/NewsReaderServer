@@ -31,7 +31,7 @@ class NewsPost(ndb.Model):
         for word in self.dictWords:
 
             # we calculate the term frequency for each word
-            tf = (self.dictWords[word] * 1.0) / (self.numWords)
+            tf = (self.dictWords[word] * 1.0)
 
 
             # we read the inverse document frequency if it exists
