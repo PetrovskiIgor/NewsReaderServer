@@ -38,7 +38,6 @@ class NewsPost(ndb.Model):
 
             val_idf = dictIDF.get(word, None)
             if val_idf is not None:
-
                 if tf > 0:
                     tf = 1 + math.log10(tf)
                 else:
@@ -46,6 +45,8 @@ class NewsPost(ndb.Model):
 
                 tf_idf = val_idf * tf
                 self.dict_tf_idf[word] = tf_idf
+            else:
+                self.dict_tf_idf[word] = 0
 
 
     @classmethod

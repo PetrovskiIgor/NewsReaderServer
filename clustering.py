@@ -122,9 +122,10 @@ def mergevectors(vec1, vec2):
 
 
 # gets list of news_posts and returns list of clusters where each cluster contains set of news_posts (posts)
-def cluster_news(news_post):
+def cluster_news(news_posts):
 
     innerfeedback = ''
+
     try:
         currentclustid = -1
         sims = []
@@ -135,7 +136,7 @@ def cluster_news(news_post):
         inArr = set()
 
         innerfeedback += 'Assigning one cluster to one newspost..\n'
-        for post in news_post:
+        for post in news_posts:
             c = bicluster(vec=post.dict_tf_idf,id=i)
             c.posts.append(post)
             clust.append(c)

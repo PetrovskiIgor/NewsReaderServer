@@ -1,5 +1,26 @@
 cron:
-- description: crawl pages
-  url: /crawl_me_some_pages
+- description: crawl pages 1
+  url: /crawl_me_some_pages?start=0&end=5
   schedule: every 10 minutes
   target: module1
+- description: crawl pages 2
+  url: /crawl_me_some_pages?start=3&end=6
+  schedule: every 10 minutes
+  target: module1
+- description: crawl pages 3
+  url: /crawl_me_some_pages?start=6&end=9
+  schedule: every 10 minutes
+  target: module1
+- description: crawl pages 4
+  url: /crawl_me_some_pages?start=9&end=12
+  schedule: every 10 minutes
+  target: module1
+- description: crawl pages 5
+  url: /crawl_me_some_pages?start=12&end=15
+  schedule: every 10 minutes
+  target: module1
+- description: cluster things
+  url: /prepare_for_clustering
+  schedule: every 2 hours
+  target:     module1
+

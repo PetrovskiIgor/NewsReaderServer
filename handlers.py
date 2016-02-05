@@ -1,10 +1,12 @@
+#encoding=utf-8
 from flask import Flask
 from flask import Request
 from flask import  Response
+from flask import jsonify
 
-
-
-
+import re
+import json
+import unicodedata
 import crawler
 import classification
 import clustering
@@ -18,21 +20,44 @@ from Cluster import Cluster
 
 from flask import request
 from NewsPostClient import  NewsPostClient
+from google.appengine.ext import ndb
+from IDFModel import IDFModel
+from flask import redirect
+from google.appengine.api import taskqueue
+import logging
+
+from NewsPost import  NewsPost
 
 @app.route('/')
 def hello():
     """Return a friendly HTTP greeting."""
-    return 'Hello World!'
+    return 'No te procupas, compadre!'
 
 
 @app.route('/crawl_me_some_pages')
 def crawl():
-    res = crawler.crawlThem()
+
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    if start is None:
+        start = 0
+
+
+
+    if end is None:
+        end = 1000
+
+    start = int(start)
+    end = int(end)
+
+    res = crawler.crawlThem(start, end)
 
     return Response(res, mimetype='text/plain')
 
 @app.route('/get_me_some_links')
 def getLinks():
+
 
     newsPosts = crawler.takeNewsPosts()
     str = ''
@@ -56,6 +81,9 @@ def getClusters():
     try:
         newsPosts = crawler.takeNewsPosts()
 
+
+        # utility dicts for majority voting with nb
+
         fileToRead = open(naivebayes_classification.str_dict_word_in_cat)
         dict_words = Unpickler(fileToRead).load()
         fileToRead.close()
@@ -74,6 +102,7 @@ def getClusters():
 
         #return Response('%d' % counter, mimetype='text/plain')
         clusters, innerfeedback = clustering.cluster_news(newsPosts)
+
         feedback += '%s\n' % innerfeedback
 
         feedback += 'done the clustering\n'
@@ -101,7 +130,7 @@ def getClusters():
                     maxVotes = votes_cat[cat]
                     maxCat = cat
 
-            str += '^^^ CLUSTER CATEGORY: %s\n' % maxCat
+            str += '^^^ CLUSTER CATEGORY: %s with maxVotes: %d\n' % (maxCat, maxVotes)
 
             listNews = []
             for np in  c.posts:
@@ -256,12 +285,303 @@ def  getClustersWithCat():
     return Response(str, mimetype='text/plain')
 
 
+@app.route('/insert_dict_idf_to_task')
+def insertDICTIDF_task():
+    str = ''
+    feedback = ''
+    try:
+        logging.debug('Trying to load the dictionary for idf..')
+        fileToRead = open('dict_idf')
+        dictIDF = Unpickler(fileToRead).load()
+        fileToRead.close()
+
+        logging.debug('Loaded the dictionary for idf!')
+
+        logging.debug('Inserting words')
+        counter = 0
+        for word in dictIDF:
+            key = ndb.Key('IDFModel', word)
+
+            newPair = IDFModel(parent = key, word = word, value = dictIDF[word])
+            newPair.put()
+
+            counter += 1
+
+            if counter % 1000:
+                logging.debug('Inserted %d words' % counter)
+
+
+
+        logging.debug('Wuhu! Inserted all the words.')
+        str += 'Inserted %d words for IDF\n' % counter
+    except Exception as inst:
+        feedback += 'Exception type: %s\n' % type(inst)
+        feedback += 'Exception message: %s\n' % inst.message
+
+        logging.debug(feedback)
+
+    str += feedback
+    return Response(str, mimetype='text/plain')
+
+
+@app.route('/insert_dict_idf')
+def insertDictIDF():
+    taskqueue.add(url='/insert_dict_idf_to_task')
+    return redirect("/", code=302)
+
+
+@app.route('/get_idf_value')
+def getIDFValue():
+
+    str = ''
+    word = request.args.get('zbor')
+
+    rows = IDFModel.query(IDFModel.word == word).fetch()
+
+    if rows is not None and len(rows) > 0:
+        str += 'IDF value for word %s is %f\n' % (word, rows[0].value)
+    else:
+        str += 'No IDF Value for word %s\n' % word
+
+    return Response(str, mimetype='text/plain')
+
+
+@app.route('/get_my_clusters')
+def getMYClusters():
+    category = request.args.get('category')
+
+    clusters = Cluster.query(Cluster.category == category).fetch()
+
+    obj = {'listClusters' : [c.serialize() for c in clusters]}
+
+    result = json.dumps(obj, ensure_ascii=True)
+
+    return Response(result, mimetype='text/plain')
+
+
+@app.route('/get_my_news')
+def getMYNews():
+    category = request.args.get('category')
+    news = NewsPost.query().fetch()
+    clusters = Cluster.query(Cluster.category == category).fetch()
+
+    newNews = []
+
+    for n in news:
+        newObject = NewsPostClient(url = n.url,host_page = n.host_page,title = n.title)
+        newNews.append(newObject)
+
+
+    #result = str(byteify(newNews[0].serialize()))
+
+    result = ''
+
+
+    return Response(result, mimetype='application/javascript')
+
+
+def byteify(input):
+    if isinstance(input, dict):
+        return {byteify(key): byteify(value)
+                for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [byteify(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+
+@app.route('/get_clusters_server')
+def getClustersServer():
+
+    category = request.args.get('category')
+
+    clusters = Cluster.query(Cluster.category == category).fetch()
+    str = ''
+    if clusters is None:
+        str = 'None clusters :/'
+    else:
+        i = 1
+        for c in clusters:
+            str += 'Cluster %d\n' % i
+
+            for np in c.listNews:
+                str += '\t%s\n' % np.title
+
+            i += 1
+
+
+    return Response(str, mimetype='text/plain')
+
+
+
+@app.route('/get_news_from_source')
+def getNewsFromSource():
+    source = request.args.get('source')
+    s = ''
+    newsPosts = NewsPost.query(NewsPost.host_page == source).fetch()
+
+    for np in newsPosts:
+        s+= '%s\n' % np.title
+
+
+    return Response(s, mimetype='text/plain')
+
+import  logging
+from bs4 import BeautifulSoup
+from urllib2 import urlopen
+from NewsPost import NewsPost
+import Utility
+from cPickle import Unpickler
+from google.appengine.ext import ndb
+
+
+@app.route('/crawl_content')
+def crawlContent():
+    web_page_url = request.args.get('source')
+    str = ''
+    feedback = ''
+    try:
+        str += 'Trying to open the url..'
+        c = urlopen(web_page_url)
+        content = c.read()
+        soup = BeautifulSoup(content)
+
+        str += 'Opened the url!'
+        logging.debug('getNewsPosts: failed on reading web_page_url')
+
+
+        logging.debug('instantiated beautiful soup')
+        newsPosts = []
+        feedback += 'in it\n'
+        for item in soup.findAll('item'):
+
+            try:
+                title   = item.find('title').string
+
+                str += 'title: %s\n' % title
+
+                content = item.find('content:encoded')
+
+                if content is not None:
+                    str += 'content:\n'
+
+                    for p in content.findAll('p'):
+                        str += '%s\n' % p.text
+                else:
+                    str += 'No content. Fuck you\n'
 
 
 
 
+            except Exception as inst:
+                feedback += 'Inner Exception type: %s\n' % str(type(inst))
+                feedback += 'Inner Exception message: %s\n' % inst.message
+
+
+    except Exception as inst:
+
+        feedback += 'Exception type: %s\n' % type(inst)
+        feedback += 'Exception message: %s\n' % inst.message
 
 
 
+    str += feedback
+
+    return Response(str, mimetype='text/plain')
 
 
+
+p_boundaries = {'http://vecer.mk/rss.xml':[0,-3],
+                'http://www.crnobelo.com/?format=feed&type=rss': [0,-2],
+                'http://novatv.mk/rss.xml?tip=2':[2,-2],
+                'http://novatv.mk/rss.xml?tip=5':[2,-2],
+                'http://novatv.mk/rss.xml?tip=7':[2,-2],
+                'http://novatv.mk/rss.xml?tip=23':[2,-2]}
+
+@app.route('/check_words')
+def checkWords():
+
+
+    web_page_url = request.args.get('source')
+
+    str = ''
+    feedback = ''
+    try:
+        c = urlopen(web_page_url)
+        content = c.read()
+        soup = BeautifulSoup(content)
+
+        feedback += 'in it\n'
+        counter = 0
+        for item in soup.findAll('item'):
+
+            try:
+                title  = item.find('title').string
+
+                str += 'TITLE: %s\n' % title
+                str += 'CONTENT:\n'
+
+                content = item.find('content')
+
+                #if content is not None:
+                #    str += 'IMA GOTOV BRALE\n'
+                #    str += '%s\n' % content.text
+
+                #else:
+                linkUrl = item.find('link').string
+                linkContent = urlopen(linkUrl).read()
+                innerSoup = BeautifulSoup(linkContent)
+
+                feedback += 'setting start and end..\n'
+                start = 0
+                end = len(innerSoup.findAll('p'))
+                feedback += 'Set start & end!\n'
+
+                if web_page_url in crawler.p_boundaries:
+                    start =  crawler.p_boundaries[web_page_url][0]
+
+                    if len(crawler.p_boundaries[web_page_url]) > 1:
+                        end = crawler.p_boundaries[web_page_url][1]
+
+                for p in innerSoup.findAll('p')[start:end]:
+                    str +='%s\n' % p.text
+
+                str += '\n'
+            except Exception as inst:
+                feedback += 'Inner Exception type: %s\n' % str(type(inst))
+                feedback += 'Inner Exception message: %s\n' % inst.message
+
+            counter += 1
+            if counter > 4: break
+
+    except Exception as inst:
+
+        feedback += 'Exception type: %s\n' % type(inst)
+        feedback += 'Exception message: %s\n' % inst.message
+
+
+    str += feedback
+
+    return Response(str, mimetype='text/plain')
+
+
+def visible(element):
+    if element.parent.name in ['style', 'script', '[document]', 'head', 'title']:
+        return False
+    elif re.match('<!--.*-->', str(element)):
+        return False
+    return True
+
+
+
+@app.route('/prepare_for_clustering')
+def prepareClustering():
+    logging.debug('preparing for refreshing..')
+    ndb.delete_multi(Cluster.query().fetch(keys_only=True))
+
+    getClusters()
+    logging.debug('refreshed!')
+
+    return ''
