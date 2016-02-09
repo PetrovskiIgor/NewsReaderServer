@@ -25,24 +25,25 @@ from google.appengine.ext import ndb
 sources = ['http://vecer.mk/rss.xml',                           #0
            'http://www.crnobelo.com/?format=feed&type=rss',     #1
            'http://sitel.mk/rss.xml',                           #2,
-           'http://kurir.mk/feed/',                             #4
-           'http://republika.mk/?feed=rss2',                    #5
-           'http://plusinfo.mk/rss/biznis',                     #6
-           'http://plusinfo.mk/rss/skopje',                     #7
-           'http://plusinfo.mk/rss/kultura',                    #8
-           'http://plusinfo.mk/rss/biznis',                     #9
-           'http://plusinfo.mk/rss/zdravje',                    #10
-           'http://plusinfo.mk/rss/svet',                       #11
-           'http://plusinfo.mk/rss/scena',                      #12
-          # 'http://novatv.mk/rss.xml?tip=2',                    #13
-          # 'http://novatv.mk/rss.xml?tip=5',                    #14
-          # 'http://novatv.mk/rss.xml?tip=7',                    #15
-         #  'http://novatv.mk/rss.xml?tip=23',                   #16
-           'http://www.vest.mk/rssGenerator/',                  #17
-           'http://alsat.mk/RssFeed',                           #18
-           'http://www.mkd.mk/feed',                            #19
-           'http://www.sport.com.mk/rssgenerator/rss.aspx',
-           'http://www.dnevnik.mk/rssGenerator/']
+           'http://kurir.mk/feed/',                             #3
+           'http://republika.mk/?feed=rss2',                    #4
+           'http://plusinfo.mk/rss/biznis',                     #5
+           'http://plusinfo.mk/rss/skopje',                     #6
+           'http://plusinfo.mk/rss/kultura',                    #7
+           'http://plusinfo.mk/rss/biznis',                     #8
+           'http://plusinfo.mk/rss/zdravje',                    #9
+           'http://plusinfo.mk/rss/svet',                       #10
+           'http://plusinfo.mk/rss/scena',                      #11
+          # 'http://novatv.mk/rss.xml?tip=2',                    #12
+          # 'http://novatv.mk/rss.xml?tip=5',                    #13
+          # 'http://novatv.mk/rss.xml?tip=7',                    #14
+         #  'http://novatv.mk/rss.xml?tip=23',                   #15
+           'http://www.vest.mk/rssGenerator/',                  #16
+           'http://alsat.mk/RssFeed',                           #17
+           'http://www.mkd.mk/feed',                            #18
+           'http://www.sport.com.mk/rssgenerator/rss.aspx',     #19
+           'http://www.dnevnik.mk/rssGenerator/',               #20
+           'http://interesno.com.mk/index.php?format=feed&type=rss' ] #21
 
 p_boundaries = {'http://vecer.mk/rss.xml':[0,-3],
                 'http://www.crnobelo.com/?format=feed&type=rss': [0,-2],
