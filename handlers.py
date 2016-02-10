@@ -1,32 +1,29 @@
 #encoding=utf-8
-from flask import Flask
-from flask import Request
-from flask import  Response
-from flask import jsonify
-
 import re
 import json
-import unicodedata
+
+from flask import Flask
+from flask import  Response
+
 import crawler
 import classification
 import clustering
+
 app = Flask(__name__)
 # Note: We don't need to call run() since our application is embedded within
 # the App Engine WSGI application server.
 import  naivebayes_classification
 import  test_classifications
-from cPickle import Unpickler
-from Cluster import Cluster
+from model.Cluster import Cluster
 
 from flask import request
-from NewsPostClient import  NewsPostClient
-from google.appengine.ext import ndb
+from model.NewsPostClient import  NewsPostClient
 from IDFModel import IDFModel
 from flask import redirect
 from google.appengine.api import taskqueue
-import logging
 
-from NewsPost import  NewsPost
+import Utility
+
 
 @app.route('/')
 def hello():
@@ -431,8 +428,7 @@ def getNewsFromSource():
 import  logging
 from bs4 import BeautifulSoup
 from urllib2 import urlopen
-from NewsPost import NewsPost
-import Utility
+from model.NewsPost import NewsPost
 from cPickle import Unpickler
 from google.appengine.ext import ndb
 
@@ -585,3 +581,12 @@ def prepareClustering():
     logging.debug('refreshed!')
 
     return ''
+
+
+@app.route('/get_sources')
+def getSources():
+
+    sources = [source.serialize() for source in Utility.sources]
+
+
+    return Response(str(sources), mimetype='application/javascript')

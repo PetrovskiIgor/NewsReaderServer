@@ -10,6 +10,5 @@ class Cluster(ndb.Model):
     def serialize(self):
         return {
             "category": self.category,
-            #"listNews": handlers.byteify([news.serialize() for news in self.listNews]),
             'listNews': [news.serialize() for news in self.listNews]
         }

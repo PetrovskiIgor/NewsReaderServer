@@ -1,12 +1,13 @@
 #encoding=utf-8
 import  logging
-from bs4 import BeautifulSoup
 from urllib2 import urlopen
-from NewsPost import NewsPost
-import Utility
 from cPickle import Unpickler
-from cPickle import Pickler
+
+from bs4 import BeautifulSoup
+from model.NewsPost import NewsPost
+import Utility
 from google.appengine.ext import ndb
+
 
 # rss-feeds:
 
