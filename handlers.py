@@ -622,16 +622,16 @@ def getClustersServer():
 @app.route('/get_filtered_clusters')
 def getFilteredClusters():
 
-    reqParam = request.args.get('unwantedSources')
+    reqParam = request.args.get('wantedSources')
 
-    listUnwanted = []
+    listWanted = []
 
     if None != reqParam:
-        listUnwanted = reqParam.split(',')
+        listWanted = reqParam.split(',')
 
 
-    for i in range(0, len(listUnwanted)):
-        listUnwanted[i] = int(listUnwanted[i])
+    for i in range(0, len(listWanted)):
+        listWanted[i] = int(listWanted[i])
 
     category = request.args.get('category')
 
@@ -642,7 +642,7 @@ def getFilteredClusters():
     for c in clusters:
         listNews = []
         for np in c.listNews:
-            if np.source_id not in listUnwanted:
+            if np.source_id in listWanted:
                 listNews.append(np)
 
         if len(listNews) > 0:
@@ -675,7 +675,7 @@ def getFilteredClustersDebug():
     for i in range(0, len(listWanted)):
         listWanted[i] = int(listWanted[i])
 
-    result = 'Unwanted sources: %s\n' % listWanted
+    result = 'Wanted sources: %s\n' % listWanted
 
 
 
