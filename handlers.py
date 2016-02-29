@@ -22,15 +22,24 @@ from IDFModel import IDFModel
 from flask import redirect
 from google.appengine.api import taskqueue
 
+import  logging
+from bs4 import BeautifulSoup
+from urllib2 import urlopen
+from model.NewsPost import NewsPost
+from cPickle import Unpickler
+from google.appengine.ext import ndb
+
+
 import Utility
 
+# the class where we receive the requests
 
 @app.route('/')
 def hello():
     """Return a friendly HTTP greeting."""
     return 'No te procupas, compadre!'
 
-
+# function that crawls the web-pages and extracts information
 @app.route('/crawl_me_some_pages')
 def crawl():
 
@@ -39,8 +48,6 @@ def crawl():
 
     if start is None:
         start = 0
-
-
 
     if end is None:
         end = 1000
@@ -54,7 +61,6 @@ def crawl():
 
 @app.route('/get_me_some_links')
 def getLinks():
-
 
     newsPosts = crawler.takeNewsPosts()
     str = ''
@@ -104,9 +110,13 @@ def getClusters():
 
         feedback += 'done the clustering\n'
         i = 0
-        for c in clusters:
-            newsInCluster = c.posts
 
+        feedback += 'num of clusters: %d\n' % len(clusters)
+        for c in clusters:
+
+            feedback += 'getting posts from cluster\n'
+            newsInCluster = c.posts
+            feedback += 'got the posts from cluster\n'
 
             str += 'cluster %d\n' % i
 
@@ -127,12 +137,25 @@ def getClusters():
                     maxVotes = votes_cat[cat]
                     maxCat = cat
 
-            str += '^^^ CLUSTER CATEGORY: %s with maxVotes: %d\n' % (maxCat, maxVotes)
+            feedback += '^^^ CLUSTER CATEGORY: %s with maxVotes: %d\n' % (maxCat, maxVotes)
 
             listNews = []
+
+            feedback += ' number of posts in cluster %d\n' % len(c.posts)
             for np in  c.posts:
-                newNews = NewsPostClient(url = np.url, host_page = np.host_page, title = np.title, numWords = np.numWords)
+
+                feedback += 'trying to create NewsPostClient\n'
+                feedback += 'title: %s \n' % np.title
+                feedback += 'numWords: %d\n' % np.numWords
+                feedback +=  'url: %s\n' % np.url
+
+                newNews = NewsPostClient(url = np.url, host_page = np.host_page, title = np.title, numWords = np.numWords, source_id = np.source_id,
+                                         source_url = np.source_url,
+                                         img_url = np.img_url)
+
+                feedback += 'created NewsPostClient'
                 listNews.append(newNews)
+                feedback += 'appended newNews\n'
 
             newCluster = Cluster(category = maxCat, listNews = listNews)
             newCluster.put()
@@ -189,7 +212,10 @@ def getNewsPosts():
     str = ''
     i = 0
     for np in newsPosts:
-        str += '%d: %s\n' % (i , np.title)
+
+
+
+        str += '%d: %s %d %s\n' % (i , np.title, np.source_id, np.source_url)
         i += 1
 
 
@@ -388,31 +414,6 @@ def byteify(input):
     else:
         return input
 
-
-@app.route('/get_clusters_server')
-def getClustersServer():
-
-    category = request.args.get('category')
-
-    clusters = Cluster.query(Cluster.category == category).fetch()
-    str = ''
-    if clusters is None:
-        str = 'None clusters :/'
-    else:
-        i = 1
-        for c in clusters:
-            str += 'Cluster %d\n' % i
-
-            for np in c.listNews:
-                str += '\t%s\n' % np.title
-
-            i += 1
-
-
-    return Response(str, mimetype='text/plain')
-
-
-
 @app.route('/get_news_from_source')
 def getNewsFromSource():
     source = request.args.get('source')
@@ -425,12 +426,6 @@ def getNewsFromSource():
 
     return Response(s, mimetype='text/plain')
 
-import  logging
-from bs4 import BeautifulSoup
-from urllib2 import urlopen
-from model.NewsPost import NewsPost
-from cPickle import Unpickler
-from google.appengine.ext import ndb
 
 
 @app.route('/crawl_content')
@@ -588,5 +583,136 @@ def getSources():
 
     sources = [source.serialize() for source in Utility.sources]
 
-
     return Response(str(sources), mimetype='application/javascript')
+
+
+
+#debugging function that lists the clusters as an string in the response
+@app.route('/get_clusters_server')
+def getClustersServer():
+
+    category = request.args.get('category')
+
+    str = ''
+
+    clusters = Cluster.query(Cluster.category == category).fetch()
+
+    str += 'Got category %s\n' % category
+
+    if clusters is None:
+        str = 'None clusters :/'
+    else:
+        i = 1
+
+        str += 'Number of clusters %d\n' % len(clusters)
+
+        for c in clusters:
+            str += 'Cluster %d\n' % i
+
+            for np in c.listNews:
+                str += '\t%s\t%s\n' % (np.title, np.source_url)
+
+            i += 1
+
+
+    return Response(str, mimetype='text/plain')
+
+
+# the function that is called when the client issues a request for news (clusters) from certain category
+@app.route('/get_filtered_clusters')
+def getFilteredClusters():
+
+    reqParam = request.args.get('unwantedSources')
+
+    listUnwanted = []
+
+    if None != reqParam:
+        listUnwanted = reqParam.split(',')
+
+
+    for i in range(0, len(listUnwanted)):
+        listUnwanted[i] = int(listUnwanted[i])
+
+    category = request.args.get('category')
+
+    clusters = Cluster.query(Cluster.category == category).fetch()
+
+    clustersToReturn = []
+
+    for c in clusters:
+        listNews = []
+        for np in c.listNews:
+            if np.source_id not in listUnwanted:
+                listNews.append(np)
+
+        if len(listNews) > 0:
+            c.listNews = listNews
+            clustersToReturn.append(c)
+
+
+    # WE NEED TO SORT THE CLUSTERS BY SOME PARAMETER (MAYBE THE SIZE OF THE CLUSTER)
+
+    obj = {'listClusters' : [c.serialize() for c in clustersToReturn]}
+
+    result = json.dumps(obj, ensure_ascii=True)
+
+    return Response(result, mimetype='text/plain')
+
+
+@app.route('/get_filtered_clusters_debug')
+def getFilteredClustersDebug():
+    reqParam = request.args.get('unwantedSources')
+    listUnwanted = []
+
+
+    #vrednosta na parametarot unwantedSources kje bide od oblik id1,id2
+    # mozhno e mesto unwantedSources da se premesti vo wantedSources za polesna manipulacija
+    # na klientska strana
+
+    if None != reqParam:
+        listUnwanted = reqParam.split(',')
+
+    # da se pretvorat vo integers
+    for i in range(0, len(listUnwanted)):
+        listUnwanted[i] = int(listUnwanted[i])
+
+    result = 'Unwanted sources: %s\n' % listUnwanted
+
+
+
+    category = request.args.get('category')
+
+    clusters = Cluster.query(Cluster.category == category).fetch()
+
+
+    #tuka gi smestuvame samo klasterite shto se so filtrirani vesti
+    # (ne zemame vesti od izvori sto korisnikot ne gi saka)
+    clustersToReturn = []
+
+    for c in clusters:
+        listNews = []
+        for np in c.listNews:
+            if np.source_id not in listUnwanted:
+                listNews.append(np)
+        #dokolku klasterot nema nitu edna vest posle filtriranjeto
+        #ne go vkluchuvame bidejkji e prazen :)
+        if len(listNews) > 0:
+            c.listNews = listNews
+            clustersToReturn.append(c)
+
+
+
+    i = 1
+
+    #debugging
+    result += 'Number of clusters %d\n' % len(clusters)
+    
+    for c in clustersToReturn:
+        result += 'Cluster %d\n' % i
+        for np in c.listNews:
+            result += '\t%s\t%s\n' % (np.title, np.source_url)
+        i += 1
+
+
+
+    return Response(result, mimetype='text/plain')

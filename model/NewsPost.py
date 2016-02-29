@@ -2,6 +2,12 @@
 
 from google.appengine.ext import ndb
 import math
+from model import Source
+
+
+# heavy weight class for representing a news-post
+# we send a light-weighted version to the user because the user doesn't need all the dictionaries contained here
+
 class NewsPost(ndb.Model):
 
     url = ndb.StringProperty()
@@ -11,6 +17,13 @@ class NewsPost(ndb.Model):
     dict_tf_idf = ndb.PickleProperty()
     numWords = ndb.IntegerProperty()
     words = ndb.PickleProperty()
+
+
+    source_id = ndb.IntegerProperty()
+    source_url = ndb.StringProperty()
+
+
+    img_url = ndb.StringProperty()
 
     #def __init__(self, host_page, url, title, dictWords, numWords):
     #    self.host_page = host_page

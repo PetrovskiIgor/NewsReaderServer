@@ -23,28 +23,7 @@ from google.appengine.ext import ndb
 # http://novatv.mk/rss
 
 
-sources = ['http://vecer.mk/rss.xml',                           #0
-           'http://www.crnobelo.com/?format=feed&type=rss',     #1
-           'http://sitel.mk/rss.xml',                           #2,
-           'http://kurir.mk/feed/',                             #3
-           'http://republika.mk/?feed=rss2',                    #4
-           'http://plusinfo.mk/rss/biznis',                     #5
-           'http://plusinfo.mk/rss/skopje',                     #6
-           'http://plusinfo.mk/rss/kultura',                    #7
-           'http://plusinfo.mk/rss/biznis',                     #8
-           'http://plusinfo.mk/rss/zdravje',                    #9
-           'http://plusinfo.mk/rss/svet',                       #10
-           'http://plusinfo.mk/rss/scena',                      #11
-          # 'http://novatv.mk/rss.xml?tip=2',                    #12
-          # 'http://novatv.mk/rss.xml?tip=5',                    #13
-          # 'http://novatv.mk/rss.xml?tip=7',                    #14
-         #  'http://novatv.mk/rss.xml?tip=23',                   #15
-           'http://www.vest.mk/rssGenerator/',                  #16
-           'http://alsat.mk/RssFeed',                           #17
-           'http://www.mkd.mk/feed',                            #18
-           'http://www.sport.com.mk/rssgenerator/rss.aspx',     #19
-           'http://www.dnevnik.mk/rssGenerator/',               #20
-           'http://interesno.com.mk/index.php?format=feed&type=rss' ] #21
+
 
 p_boundaries = {'http://vecer.mk/rss.xml':[0,-3],
                 'http://www.crnobelo.com/?format=feed&type=rss': [0,-2],
@@ -78,7 +57,7 @@ def filterTitles(words, source):
     return words
 
 
-def getNewsPosts(web_page_url, dictIDF):
+def getNewsPosts(sourceObject, web_page_url, dictIDF):
 
     feedback = ''
     try:
@@ -92,11 +71,16 @@ def getNewsPosts(web_page_url, dictIDF):
         logging.debug('instantiated beautiful soup')
         newsPosts = []
         feedback += 'in it\n'
+
+        for encoded_content in soup.findAll("encoded"):
+            feedback += 'encoded_content: %s\n' % encoded_content
+
         for item in soup.findAll('item'):
 
             try:
                 title   = item.find('title').string
                 linkUrl = item.find('link').string
+
                 print 'processing ', linkUrl
 
                 linkContent = urlopen(linkUrl).read()
@@ -134,6 +118,9 @@ def getNewsPosts(web_page_url, dictIDF):
                     if words != None and len(words) > 0:
                         totalWords.extend(words)
 
+
+
+
                 numWords = len(totalWords)
                 feedback += 'numWords: %d\n' % numWords
                 for word in totalWords:
@@ -148,14 +135,27 @@ def getNewsPosts(web_page_url, dictIDF):
                 else:
                     feedback += 'howMuch is NOT none\n'
 
+                feedback += 'item title %s\n' % title
+                feedback += 'item source: %s\n' % sourceObject.url
+
+                imgs = innerSoup.findAll('img')
+
+                img_url = ''
+                if imgs is not None and len(imgs) > 0:
+                    img_url = imgs[0]['src']
+
+
+                feedback += 'item img_url: %s\n' % img_url
 
                 if howMuch is not None and len(howMuch) > 0:
                     continue
 
-                feedback += 'item title %s\n' % title
+
                  # dictNews, title, link, host_page
                 newsPost = NewsPost(parent=ndb.Key('NewsPost', linkUrl or "*notitle*"), url = linkUrl,host_page = web_page_url,
-                                    title = title, dictWords = dictNews, numWords = numWords, words = totalWords)
+                                    title = title, dictWords = dictNews, numWords = numWords, words = totalWords ,
+                                    source_id = sourceObject.id, source_url = sourceObject.url,
+                                    img_url = img_url)
                 newsPost.calculate_tf_idf(dictIDF)
                 newsPost.put()
                 newsPosts.append(newsPost)
@@ -175,8 +175,6 @@ def getNewsPosts(web_page_url, dictIDF):
 
 def crawlThem(start, end):
 
-    end = min(end, len(sources))
-
     logging.debug('start: %d end: %d' % (start, end))
 
     fileToRead = open('dict_idf')
@@ -186,24 +184,16 @@ def crawlThem(start, end):
     str = ''
     newsPosts = []
 
-    for source in sources[start:end]:
-        newList, feedback = getNewsPosts(source, dictIDF)
-        newsPosts.extend(newList)
-        str += feedback
+    for sourceObject in Utility.sources:
+
+        for source in sourceObject.links:
+            newList, feedback = getNewsPosts(sourceObject, source, dictIDF)
+            newsPosts.extend(newList)
+            str += feedback
 
 
     str += 'number of posts: %d\n' % len(newsPosts)
 
-
-
-
-    for np in newsPosts:
-        np.calculate_tf_idf(dictIDF)
-        #np.put()
-
-    #fileToWrite = open('listNewsPosts', 'w')
-    #Pickler(fileToWrite).dump(newsPosts)
-    #fileToWrite.close()
 
     return str
 
