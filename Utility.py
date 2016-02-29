@@ -31,11 +31,10 @@ stopWords = set(['сте', 'ве', 'ви', 'вие', 'вас', 'но', 'го', '
 sources = [ Source(0, 'http://vecer.mk', ['http://vecer.mk/rss.xml']),
             Source(1,'http://www.crnobelo.com',['http://www.crnobelo.com/?format=feed&type=rss']),
             Source(2,'http://sitel.mk',['http://sitel.mk/rss.xml']),
-            Source(3,'http://kurir.mk',['http://kurir.mk/feed/'])#,
-            #Source(4,'http://republika.mk',['http://republika.mk/?feed=rss2']),
+            Source(3,'http://kurir.mk',['http://kurir.mk/feed/']),
+            Source(4,'http://republika.mk',['http://republika.mk/?feed=rss2'])
             #Source(5,'http://plusinfo.mk',['http://plusinfo.mk/rss/biznis','http://plusinfo.mk/rss/skopje', 'http://plusinfo.mk/rss/kultura',
-            #                   'http://plusinfo.mk/rss/zdravje', 'http://plusinfo.mk/rss/svet', 'http://plusinfo.mk/rss/scena'])
-            #,
+            #                   'http://plusinfo.mk/rss/zdravje', 'http://plusinfo.mk/rss/svet', 'http://plusinfo.mk/rss/scena']),
             #Source(6,'http://www.vest.mk',['http://www.vest.mk/rssGenerator/']),
             #Source(7,'http://alsat.mk',['http://alsat.mk/RssFeed']),
             #Source(8,'http://www.mkd.mk/feed',[ 'http://www.mkd.mk/feed']),

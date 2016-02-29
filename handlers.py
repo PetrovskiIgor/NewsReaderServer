@@ -661,22 +661,21 @@ def getFilteredClusters():
 
 @app.route('/get_filtered_clusters_debug')
 def getFilteredClustersDebug():
-    reqParam = request.args.get('unwantedSources')
-    listUnwanted = []
+    reqParam = request.args.get('wantedSources')
+    listWanted = []
 
 
-    #vrednosta na parametarot unwantedSources kje bide od oblik id1,id2
-    # mozhno e mesto unwantedSources da se premesti vo wantedSources za polesna manipulacija
-    # na klientska strana
+    #vrednosta na parametarot wantedSources kje bide od oblik id1,id2
+
 
     if None != reqParam:
-        listUnwanted = reqParam.split(',')
+        listWanted = reqParam.split(',')
 
     # da se pretvorat vo integers
-    for i in range(0, len(listUnwanted)):
-        listUnwanted[i] = int(listUnwanted[i])
+    for i in range(0, len(listWanted)):
+        listWanted[i] = int(listWanted[i])
 
-    result = 'Unwanted sources: %s\n' % listUnwanted
+    result = 'Unwanted sources: %s\n' % listWanted
 
 
 
@@ -692,7 +691,7 @@ def getFilteredClustersDebug():
     for c in clusters:
         listNews = []
         for np in c.listNews:
-            if np.source_id not in listUnwanted:
+            if np.source_id in listWanted:
                 listNews.append(np)
         #dokolku klasterot nema nitu edna vest posle filtriranjeto
         #ne go vkluchuvame bidejkji e prazen :)
@@ -716,3 +715,44 @@ def getFilteredClustersDebug():
 
 
     return Response(result, mimetype='text/plain')
+
+
+
+#debuging request za vlecenje na slikite od rss-feed
+@app.route('/get_images')
+def getImages():
+
+    web_page_url = request.args.get('page_url')
+
+    c = urlopen(web_page_url)
+    content = c.read()
+
+    soup = BeautifulSoup(content)
+    result = ''
+    for item in soup.findAll('item'):
+
+        if item.title is None:
+            result += 'No title.. Continuing'
+            continue
+
+        if item.link is None:
+            result += 'No link.. Continuing'
+            continue
+
+        if item.description is None:
+            result += 'description is None..\n'
+            continue
+
+
+        title = item.title.string
+        link = item.link.string
+        description = item.description.string
+
+        result += 'title %s\n' % title
+        result += 'link: %s\n' % link
+        result += 'description %s\n' % BeautifulSoup(item.description.string).find('img')['src']
+        result += '--------------\n'
+
+
+    return Response(result, mimetype='text/plain')
+

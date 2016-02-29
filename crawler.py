@@ -72,14 +72,22 @@ def getNewsPosts(sourceObject, web_page_url, dictIDF):
         newsPosts = []
         feedback += 'in it\n'
 
-        for encoded_content in soup.findAll("encoded"):
-            feedback += 'encoded_content: %s\n' % encoded_content
-
         for item in soup.findAll('item'):
 
             try:
                 title   = item.find('title').string
                 linkUrl = item.find('link').string
+                img_url = None
+
+                #tuka probuvame da ja zememe slikata direktno od rss feed-ot a ne od stranata kadesto pokazuva linkot linkUrl
+
+                if item.description is not None:
+                    imgObject = BeautifulSoup(item.description.string).find('img')
+
+                    if imgObject is not None:
+                        img_url = imgObject['src']
+
+
 
                 print 'processing ', linkUrl
 
@@ -138,11 +146,13 @@ def getNewsPosts(sourceObject, web_page_url, dictIDF):
                 feedback += 'item title %s\n' % title
                 feedback += 'item source: %s\n' % sourceObject.url
 
-                imgs = innerSoup.findAll('img')
 
-                img_url = ''
-                if imgs is not None and len(imgs) > 0:
-                    img_url = imgs[0]['src']
+                if img_url is None:
+                    imgs = innerSoup.findAll('img')
+
+                    img_url = ''
+                    if imgs is not None and len(imgs) > 0:
+                        img_url = imgs[0]['src']
 
 
                 feedback += 'item img_url: %s\n' % img_url
@@ -194,7 +204,6 @@ def crawlThem(start, end):
 
     str += 'number of posts: %d\n' % len(newsPosts)
 
-
     return str
 
 
@@ -203,7 +212,6 @@ def crawlThem(start, end):
 def takeNewsPosts():
 
    # ancestor_key = ndb.Key('NewsPost','*notitle*')
-
 
     return NewsPost.query().fetch()
 
