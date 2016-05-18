@@ -6,13 +6,11 @@ from flask import Flask
 from flask import  Response
 
 import crawler
-import classification
-import clustering
 
 app = Flask(__name__)
 # Note: We don't need to call run() since our application is embedded within
 # the App Engine WSGI application server.
-import  naivebayes_classification
+from machinelearning import naivebayes_classification, classification, clustering
 import  test_classifications
 from model.Cluster import Cluster
 
@@ -28,6 +26,7 @@ from urllib2 import urlopen
 from model.NewsPost import NewsPost
 from cPickle import Unpickler
 from google.appengine.ext import ndb
+from urllib2 import URLError
 
 
 import Utility
@@ -39,9 +38,15 @@ def hello():
     """Return a friendly HTTP greeting."""
     return 'No te procupas, compadre!'
 
+
+#----- checked -----
 # function that crawls the web-pages and extracts information
 @app.route('/crawl_me_some_pages')
 def crawl():
+    """
+    Function for crawling and storing the crawling news in a database
+    :return: returns a log of the crawled content
+    """
 
     start = request.args.get('start')
     end = request.args.get('end')
@@ -55,21 +60,28 @@ def crawl():
     start = int(start)
     end = int(end)
 
-    res = crawler.crawlThem(start, end)
+    res = crawler.crawl_me_some_news(start, end)
 
     return Response(res, mimetype='text/plain')
 
+
+#----- checked -----
+
 @app.route('/get_me_some_links')
 def getLinks():
+    """
+    debugging function that lists the titles of news posts with their 10 most important (tf-idf based) words
+    :return: returns a log
+    """
 
-    newsPosts = crawler.takeNewsPosts()
+    newsPosts = crawler.take_all_news_posts()
     str = ''
     for np in newsPosts:
         str += np.title + '\n';
 
         pairs = sorted([(word, np.dict_tf_idf[word]) for word in np.dict_tf_idf], key=lambda x:-x[1])
 
-        for pair in pairs[0:10]:
+        for pair in pairs[0:min(len(pairs),10)]:
             str += '%s %f\n' % (pair[0], pair[1])
 
         str += '\n'
@@ -82,10 +94,10 @@ def getClusters():
     feedback = ''
     str = ''
     try:
-        newsPosts = crawler.takeNewsPosts()
+        newsPosts = crawler.take_all_news_posts()
 
 
-        # utility dicts for majority voting with nb
+        # utility dicts for majority voting with naive bayes
 
         fileToRead = open(naivebayes_classification.str_dict_word_in_cat)
         dict_words = Unpickler(fileToRead).load()
@@ -172,12 +184,20 @@ def getClusters():
     str += feedback
     return Response(str, mimetype='text/plain')
 
+
+#------ checked ---------
+
 @app.route('/get_categories')
 def getCategories():
+    """
+    debugging function
+    Takes all the news posts from the db, classifies them (with NN probably) and returns them as a log
+    :return: returns a log
+    """
 
-    newsPosts = crawler.takeNewsPosts()
+    news_posts = crawler.take_all_news_posts()
 
-    categories = classification.classify_posts(newsPosts)
+    categories = classification.classify_posts(news_posts)
     #str = ''
     #for cat in categories:
     #    str += '%s\n' % cat
@@ -203,18 +223,20 @@ def getCategories():
 
     return Response(str, mimetype='text/plain')
 
-
+#----- to check -----
 @app.route('/getNewsPosts')
 def getNewsPosts():
+    """
+    debugging function
+    takes all the news posts there are and lists them to the client
+    :return: returns a log
+    """
 
-    newsPosts = crawler.takeNewsPosts()
+    newsPosts = crawler.take_all_news_posts()
 
     str = ''
     i = 0
     for np in newsPosts:
-
-
-
         str += '%d: %s %d %s\n' % (i , np.title, np.source_id, np.source_url)
         i += 1
 
@@ -229,7 +251,7 @@ def getCategoriesNB():
     response = ''
     feedback = ''
     try:
-        newsPosts = crawler.takeNewsPosts()
+        newsPosts = crawler.take_all_news_posts()
 
 
         fileToRead = open(naivebayes_classification.str_dict_word_in_cat)
@@ -718,40 +740,67 @@ def getFilteredClustersDebug():
 
 
 
-#debuging request za vlecenje na slikite od rss-feed
+# ----- checked -----
 @app.route('/get_images')
 def getImages():
-
-    web_page_url = request.args.get('page_url')
-
-    c = urlopen(web_page_url)
-    content = c.read()
-
-    soup = BeautifulSoup(content)
+    """
+    debugging function
+    for a given rss link we try to extract the image-urls and list them along with the title and the link
+    :return: returns a log
+    """
     result = ''
-    for item in soup.findAll('item'):
+    try:
+        web_page_url = request.args.get('page_url')
 
-        if item.title is None:
-            result += 'No title.. Continuing'
-            continue
+        #we set the timeout to be at most 5 seconds
+        c = urlopen(web_page_url,timeout=5)
+        content = c.read()
 
-        if item.link is None:
-            result += 'No link.. Continuing'
-            continue
+        soup = BeautifulSoup(content)
+        for item in soup.findAll('item'):
 
-        if item.description is None:
-            result += 'description is None..\n'
-            continue
+            if item.title is None:
+                result += 'No title.. Continuing'
+                continue
+
+            if item.link is None:
+                result += 'No link.. Continuing'
+                continue
+
+            if item.description is None:
+                result += 'description is None..\n'
+                continue
 
 
-        title = item.title.string
-        link = item.link.string
-        description = item.description.string
+            title = item.title.string
+            link = item.link.string
+            description = item.description.string
 
-        result += 'title %s\n' % title
-        result += 'link: %s\n' % link
-        result += 'description %s\n' % BeautifulSoup(item.description.string).find('img')['src']
-        result += '--------------\n'
+            result += 'title:\t\t%s\n' % title
+            result += 'link:\t\t%s\n' % link
+
+            if description is not None:
+                img_soup = BeautifulSoup(description)
+                img_item = img_soup.find('img')
+
+                if img_item is not None:
+                    result += 'img_path:\t%s\n' % img_item['src']
+                else:
+                    result += 'img_path"\tNone\n'
+            else:
+                img_obj = item.description.find('img')
+
+                if img_obj is not None:
+                    result += 'img_path:\t%s\n' % img_obj['src']
+                else:
+                    result += 'img_path:\t%s\n' % 'None'
+
+
+            result += '--------------\n'
+    except URLError as inst:
+        result += 'URLError: %s\n' % (inst.message)
+    except Exception as inst2:
+        result += 'Exception: %s\n' % (inst2.message)
 
 
     return Response(result, mimetype='text/plain')

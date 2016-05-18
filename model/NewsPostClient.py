@@ -1,8 +1,10 @@
 #encoding=utf-8
 
 from google.appengine.ext import ndb
-from model import Source
 
+
+#class for the objects that are being sent to the client
+#this is a light-weight version, because we don't need to sent the dictionaries (words, tf-idfs, to the client)
 class NewsPostClient(ndb.Model):
 
     url = ndb.StringProperty()

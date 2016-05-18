@@ -2,11 +2,15 @@
 #model class that represents the cluster that is being sent to the user
 
 from google.appengine.ext import ndb
-import handlers
+
+
 class Cluster(ndb.Model):
-    category = ndb.StringProperty() #the category where this cluster belongs
-    listNews = ndb.PickleProperty() #the list of news that form the cluster
-    vec = ndb.PickleProperty()      #vector of words that represents this cluster
+    #the category where this cluster belongs
+    category = ndb.StringProperty()
+    #the list of news that form the cluster
+    listNews = ndb.PickleProperty()
+    #vector of words that represents this cluster
+    vec = ndb.PickleProperty()
 
 
 

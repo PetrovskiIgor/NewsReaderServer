@@ -4,19 +4,42 @@
 # Description:
 # This file contains utility functions, dictionaries which are used through out the application
 
+
 import math
 from cPickle import Pickler
 from model.Source import Source
 
 
+#???!!!! DALI E MOZHNO DA IMA PROBLEMI ZA PRAZNO MESTO KAJ 7 semestar ???!!!!
+training_file_path='/Users/igorpetrovski/Desktop/7 semestar/NLP/dataset-hw.txt'
+vocabulary_file_path=''
 
 
 def isInStopWords(word):
-    return word in stopWords
+    return word in stop_words
+
+
+# source boundaries
+# i have noticed that specific links put constant tokens at the beginning/end of a document
+# so i have decided to ignore(delete) them
+
+paragraph_boundaries = {
+                'http://vecer.mk/rss.xml':[0,-3],
+                'http://www.crnobelo.com/?format=feed&type=rss': [0,-2],
+                'http://novatv.mk/rss.xml?tip=2'    :[2,-2],
+                'http://novatv.mk/rss.xml?tip=5'    :[2,-2],
+                'http://novatv.mk/rss.xml?tip=7'    :[2,-2],
+                'http://novatv.mk/rss.xml?tip=23'   :[2,-2],
+                'http://alsat.mk/RssFeed'           :[0,-1],
+                'http://www.vest.mk/rssGenerator/'  :[0,-7],
+                'http://alsat.mk/RssFeed'           :[1,-3],
+                'http://www.mkd.mk/feed':[0,-4],
+                'http://www.sport.com.mk/rssgenerator/rss.aspx': [1]
+                }
 
 
 #set of stopwords which will be ignored when processing a text
-stopWords = set(['сте', 'ве', 'ви', 'вие', 'вас', 'но', 'го', 'а', 'е', 'на', 'во', 'и', 'ни', 'ние', 'или',
+stop_words = set(['сте', 'ве', 'ви', 'вие', 'вас', 'но', 'го', 'а', 'е', 'на', 'во', 'и', 'ни', 'ние', 'или',
 'та', 'ма', 'ти', 'се', 'за', 'од', 'да', 'со', 'ќе', 'дека', 'што', 'не', 'ги', 'ја', 'јас',
 'тие', 'тоа', 'таа', 'тој', 'мк', 'отсто', 'гр', 'мл', 'тв', 'ул', 'врз', 'сите', 'иако', 'друг', 'друга',
 'при', 'цел', 'меѓу', 'околу', 'нив', 'кои', 'кога', 'поради', 'има', 'без', 'биле', 'она', 'кое', 'кај',
@@ -28,7 +51,8 @@ stopWords = set(['сте', 'ве', 'ви', 'вие', 'вас', 'но', 'го', '
 
 # sources where we collection data from
 
-sources = [ Source(0, 'http://vecer.mk', ['http://vecer.mk/rss.xml']),
+sources = [
+            Source(0, 'http://vecer.mk', ['http://vecer.mk/rss.xml']),
             Source(1,'http://www.crnobelo.com',['http://www.crnobelo.com/?format=feed&type=rss']),
             Source(2,'http://sitel.mk',['http://sitel.mk/rss.xml']),
             Source(3,'http://kurir.mk',['http://kurir.mk/feed/']),
@@ -51,71 +75,89 @@ path_dataset = '/Users/igorpetrovski/Desktop/7 semestar/NLP/dataset-hw.txt'
 #function that for a given text (string) returns a list of words contained in that text
 
 def getWords(line):
-  line = line.lower()
-  out = []
-  word = []
 
-  for c in line:
-    if c.isalpha():
-      word.append(c)
-      continue
-    else:
-      if word:
-        newWord =  ''.join(word).lower()
+    """
+    the basic function that parses a line
+    :param line: line that needs to be parsed
+    :return: list of words
+    """
+    line = line.lower()
+    out = []
+    word = []
 
-        if not isInStopWords(newWord):
+    for c in line:
+        if c.isalpha():
+            word.append(c)
+            continue
+        else:
+            if word:
+                newWord = ''.join(word)
 
+                if not newWord in stop_words:
+                    if len(newWord) > 6:
+                        newWord = newWord[0:6]
+
+                    out.append(newWord)
+            word = []
+
+    if word:
+        newWord =   ''.join(word)
+
+        if not newWord in stop_words:
             if len(newWord) > 6:
                 newWord = newWord[0:6]
-            out.append(newWord)
-      word = []
-  if word:
-        newWord =   ''.join(word).lower()
-
-        if not isInStopWords(newWord):
-            if len(newWord) > 6:
-                newWord = newWord[0:6]
 
             out.append(newWord)
 
-  return out
+    return out
 
 
-# function for calculating the idf dictionary
-# only one execution needed
 
-def calculate_idf_dictionary(fileName):
 
-    numDocuments = 0
+def calculate_idf_dictionary(file_path):
 
-    dictWords = {}
-    for line in open(fileName):
+    """
+    function for calculating the idf dictionary
+    only one execution needed
+    :param file_path: the file where we build the dictionary from
+    :return: we return the built dictionary
+    """
+
+    #idf for a word: log (number of total documents / number of documents that word appears in )
+
+    num_documents = 0
+
+    idf_dict = {}
+    for line in open(file_path):
         parts = line.decode('utf-8').strip().split('\t')
 
         category = parts[0] #unimportant for now..
-        text = parts[1]
+        text     = parts[1]
+
 
         words = set(getWords(text))
 
 
         for word in words:
-            dictWords[word] = 1 + dictWords.get(word, 0)
+            idf_dict[word] = 1 + idf_dict.get(word, 0)
 
-        numDocuments += 1
+        num_documents += 1
 
-        if numDocuments % 1000 == 0:
-            print 'processed %d number of documents' % numDocuments
+        if num_documents % 10000 == 0:
+            print 'processed %d number of documents' % num_documents
 
-    for word in dictWords:
-        dictWords[word] = math.log(numDocuments / (dictWords[word] * 1.0))
+    for word in idf_dict:
+        idf_dict[word] = math.log(num_documents / (idf_dict[word] * 1.0))
 
 
-    print 'number of words: ', len(dictWords)
-    print 'number of documents: ', numDocuments
+    print 'number of words: ', len(idf_dict)
+    print 'number of documents: ', num_documents
 
     fileToWrite = open(str_idf_dict, 'w')
-    Pickler(fileToWrite).dump(dictWords)
+    Pickler(fileToWrite).dump(idf_dict)
     fileToWrite.close()
+
+    return idf_dict
 
 
 #calculate_idf_dictionary(path_dataset)

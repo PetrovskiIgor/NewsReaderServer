@@ -11,31 +11,29 @@ from google.appengine.ext import ndb
 
 # rss-feeds:
 
-# http://vecer.mk/rss.xml
-# http://puls24.mk/rss-feed
-# http://www.crnobelo.com/?format=feed&type=rss
-# http://sitel.mk/rss.xml
-# http://www.telegraf.mk/telegrafrss
-# http://www.femina.mk/rss
-# http://kurir.mk/feed/
-# http://press24.mk/taxonomy/term/3/feed
-# http://press24.mk/taxonomy/term/7/feed
-# http://novatv.mk/rss
+# 1.    http://vecer.mk/rss.xml
+# 2.    http://puls24.mk/rss-feed
+# 3.    http://www.crnobelo.com/?format=feed&type=rss
+# 4.    http://sitel.mk/rss.xml
+# 5.    http://www.telegraf.mk/telegrafrss
+# 6.    http://www.femina.mk/rss
+# 7.    http://kurir.mk/feed/
+# 8.    http://press24.mk/taxonomy/term/3/feed
+# 9.    http://press24.mk/taxonomy/term/7/feed
+# 10.   http://novatv.mk/rss
+# 11.
+# 12.
+# 13.
+# 14.
+# 15.
+# 16.
+# 17.
+# 18.
+# 19.
+# 20.
 
 
 
-
-p_boundaries = {'http://vecer.mk/rss.xml':[0,-3],
-                'http://www.crnobelo.com/?format=feed&type=rss': [0,-2],
-                'http://novatv.mk/rss.xml?tip=2'    :[2,-2],
-                'http://novatv.mk/rss.xml?tip=5'    :[2,-2],
-                'http://novatv.mk/rss.xml?tip=7'    :[2,-2],
-                'http://novatv.mk/rss.xml?tip=23'   :[2,-2],
-                'http://alsat.mk/RssFeed'           :[0,-1],
-                'http://www.vest.mk/rssGenerator/'  :[0,-7],
-                'http://alsat.mk/RssFeed'           :[1,-3],
-                'http://www.mkd.mk/feed':[0,-4],
-                'http://www.sport.com.mk/rssgenerator/rss.aspx': [1]}
 
 
 sources_config = {#'http://kurir.mk/feed/': [-1],
@@ -46,8 +44,17 @@ sources_config = {#'http://kurir.mk/feed/': [-1],
                   #'http://vecer.mk/rss.xml': [-1],
                   #'http://www.telegraf.mk/telegrafrss': [-1,-1]
                   }
-def filterTitles(words, source):
 
+#some sources have a fixed set of content non-related tokens at the beginning/end of each title
+#example: (КУРИР: Политичката криза во Македонија ќе биде надмината)
+# ^ here we would like to delete the first token that appears in the sentence
+
+def filterTitles(words, source):
+    """
+    :param words: words in the title that are going to be filtered, if needed
+    :param source: the source id of the title
+    :return: the filtered words to be returned
+    """
     if source not in sources_config:
         return words
 
@@ -57,10 +64,25 @@ def filterTitles(words, source):
     return words
 
 
-def getNewsPosts(sourceObject, web_page_url, dictIDF):
 
+
+def getNewsPosts(source_object, web_page_url, dict_IDF):
+
+    """
+    The main function which crawls a particular link and returns news posts as object that have been extracted from that link.
+    Needs revising and (possibly) modifying the process of text extraction.
+
+    :param sourceObject: the source object that wraps multiple web_page_urls (we need it for creating the news post object)
+    :param web_page_url: the web page url where we extract the information from
+    :param dictIDF:     the idf dictionary that we need to calculate tf_idf for a document
+    :return: list of news posts and a feedback (for logging)
+    """
+
+    #feedback variable for logging
     feedback = ''
+
     try:
+        #opening the url and reading the content
         c = urlopen(web_page_url)
         content = c.read()
         soup = BeautifulSoup(content)
@@ -69,84 +91,90 @@ def getNewsPosts(sourceObject, web_page_url, dictIDF):
 
 
         logging.debug('instantiated beautiful soup')
+
+        #the list of object that we are going to return
         newsPosts = []
-        feedback += 'in it\n'
 
         for item in soup.findAll('item'):
 
+            #in each item we have a link to the news that we would like to process
+
             try:
+                #title of the news
                 title   = item.find('title').string
-                linkUrl = item.find('link').string
+                #link to the news
+                link_url = item.find('link').string
+
+                feedback += 'title: %s\n' % title
+                feedback += 'link_url: %s\n' % link_url
+
+                same_news_posts = NewsPost.query(NewsPost.url == link_url).fetch()
+
+
+                #we must not process the same news twice
+                if same_news_posts is not None and len(same_news_posts) > 0:
+                    feedback += 'There is/are already news post/s with this link. Continuing..\n'
+                    feedback += '------------------------------\n'
+                    continue
+
+
                 img_url = None
 
-                #tuka probuvame da ja zememe slikata direktno od rss feed-ot a ne od stranata kadesto pokazuva linkot linkUrl
+                #we try to fetch the photo url directly from the rss feed, if not possible we will try later again
+                if (item.description is not None) and (item.description.string is not None):
+                    img_obj = BeautifulSoup(item.description.string).find('img')
 
-                if item.description is not None:
-                    imgObject = BeautifulSoup(item.description.string).find('img')
+                    if img_obj is not None:
+                        img_url = img_obj['src']
+                elif item.description is not None:
+                    img_obj = item.description.find('img')
 
-                    if imgObject is not None:
-                        img_url = imgObject['src']
-
-
-
-                print 'processing ', linkUrl
-
-                linkContent = urlopen(linkUrl).read()
-
-                innerSoup = BeautifulSoup(linkContent)
-                feedback += 'trying to read the title ..\n'
-
-                feedback += 'read the title!\n'
-                #logging.debug('item title %s' % title)
+                    if img_obj is not None:
+                        img_url =  img_obj['src']
 
 
+                #here we get the content of the news
+                link_content = urlopen(link_url).read()
+                innerSoup = BeautifulSoup(link_content)
 
-                titleWords = Utility.getWords(title)
 
-                titleWords = filterTitles(titleWords, web_page_url)
+                title_words = Utility.getWords(title)
+                title_words = filterTitles(title_words, web_page_url)
 
-                newTitle = ' '.join(titleWords)
+                total_words = title_words
 
-                # add title twice
-                totalWords = titleWords
-                totalWords.extend(titleWords)
-                dictNews = {}
+                # add title twice, because we consider those words in the title twice as important as the other words
+                total_words.extend(total_words)
 
+
+                #which paragraphs to take into consideration
                 start = 0
                 end = len(innerSoup.findAll('p'))
 
-                if web_page_url in p_boundaries:
-                    start =  p_boundaries[web_page_url][0]
-                    if len(p_boundaries[web_page_url]) > 1:
-                        end = p_boundaries[web_page_url][1]
+                if web_page_url in Utility.paragraph_boundaries:
+                    start =  Utility.paragraph_boundaries[web_page_url][0]
+                    if len(Utility.paragraph_boundaries[web_page_url]) > 1:
+                        end = Utility.paragraph_boundaries[web_page_url][1]
+
 
                 for p in innerSoup.findAll('p')[start:end]:
                     words = Utility.getWords(p.text)
 
-                    if words != None and len(words) > 0:
-                        totalWords.extend(words)
+                    if words is not None and len(words) > 0:
+                        total_words.extend(words)
+
+
+                num_words = len(total_words)
+
+
+                dict_news = {}
+                for word in total_words:
+                    dict_news[word] = 1 + dict_news.get(word, 0)
 
 
 
 
-                numWords = len(totalWords)
-                feedback += 'numWords: %d\n' % numWords
-                for word in totalWords:
-                    dictNews[word] = 1 + dictNews.get(word, 0)
-
-                # OBAVEZNO DA SE OPFATI SLUCAJOT KADE SE ZEMAAT VO PREDVID DUPLIKATI !!!
-
-                howMuch = NewsPost.query(NewsPost.url == linkUrl).fetch()
-
-                if howMuch is None:
-                    feedback += 'howMuch is none\n'
-                else:
-                    feedback += 'howMuch is NOT none\n'
-
-                feedback += 'item title %s\n' % title
-                feedback += 'item source: %s\n' % sourceObject.url
-
-
+                #we are trying to get the image from the news
                 if img_url is None:
                     imgs = innerSoup.findAll('img')
 
@@ -154,21 +182,25 @@ def getNewsPosts(sourceObject, web_page_url, dictIDF):
                     if imgs is not None and len(imgs) > 0:
                         img_url = imgs[0]['src']
 
+                #deal with the pictures with relative path to the web
+                if (img_url is not None) and (len(img_url) > 0):
+                    if img_url.find(source_object.url) != 0:
+                        img_url = source_object.url + '/' + img_url
 
-                feedback += 'item img_url: %s\n' % img_url
 
-                if howMuch is not None and len(howMuch) > 0:
-                    continue
+                feedback += 'img_url: %s\n' % img_url
 
 
-                 # dictNews, title, link, host_page
-                newsPost = NewsPost(parent=ndb.Key('NewsPost', linkUrl or "*notitle*"), url = linkUrl,host_page = web_page_url,
-                                    title = title, dictWords = dictNews, numWords = numWords, words = totalWords ,
-                                    source_id = sourceObject.id, source_url = sourceObject.url,
+                newsPost = NewsPost(parent=ndb.Key('NewsPost', link_url or "*notitle*"), url = link_url, host_page = web_page_url,
+                                    title = title, dictWords = dict_news, numWords = num_words, words = total_words ,
+                                    source_id = source_object.id, source_url = source_object.url,
                                     img_url = img_url)
-                newsPost.calculate_tf_idf(dictIDF)
+
+                newsPost.calculate_tf_idf(dict_IDF)
                 newsPost.put()
                 newsPosts.append(newsPost)
+
+                feedback += '------------------------------\n'
             except Exception as inst:
                 feedback += 'Inner Exception type: %s\n' % str(type(inst))
                 feedback += 'Inner Exception message: %s\n' % inst.message
@@ -180,38 +212,62 @@ def getNewsPosts(sourceObject, web_page_url, dictIDF):
         feedback += 'Exception type: %s\n' % type(inst)
         feedback += 'Exception message: %s\n' % inst.message
 
+        #if there is an exception, we return and empty list of news posts
         return [], feedback
 
 
-def crawlThem(start, end):
+
+def crawl_me_some_news(start=0, end=len(Utility.sources)):
+
+    ### !!!
+    ### TREBA DA SE WRAP-IRA ZA SEKOJ LINK DA SE PROBA POVEKJE PATI (MIN 2) DOKOLKU IMA EXCEPTION
+    ### !!!
+
+    """
+    Crawls some pages and stores them in a database using the function getNewsPosts()
+    :param start starting index of the sources of rss feed to crawl:
+    :param end   ending index of the sources of rss feed to crawl:
+    :return returns a string containing the logs.. are the news posts are stored in the getNewsPosts function:
+    """
 
     logging.debug('start: %d end: %d' % (start, end))
 
-    fileToRead = open('dict_idf')
-    dictIDF = Unpickler(fileToRead).load()
-    fileToRead.close()
+    file_to_read = open('dict_idf')
+    dictIDF = Unpickler(file_to_read).load()
+    file_to_read.close()
 
     str = ''
-    newsPosts = []
+    #newsPosts = []
 
-    for sourceObject in Utility.sources:
+    num_news_posts = 0
+    for sourceObject in Utility.sources[start:end]:
 
         for source in sourceObject.links:
-            newList, feedback = getNewsPosts(sourceObject, source, dictIDF)
-            newsPosts.extend(newList)
+            newsList, feedback = getNewsPosts(sourceObject, source, dictIDF)
+            num_crawled_news = len(newsList)
+
+            if newsList is None or len(newsList) == 0:
+                #try again
+                str += 'Trying again for source link: %s\n' % source
+                newList, feedback = getNewsPosts(sourceObject, source, dictIDF)
+
+            #newsPosts.extend(newList)
+
             str += feedback
+            num_news_posts += len(newsList)
 
 
-    str += 'number of posts: %d\n' % len(newsPosts)
+
+    str += 'number of posts: %d\n' % num_news_posts
 
     return str
 
 
-# da se prochita od datastore..
+def take_all_news_posts():
 
-def takeNewsPosts():
-
-   # ancestor_key = ndb.Key('NewsPost','*notitle*')
+    """
+    :return returns every news post there is:
+    """
 
     return NewsPost.query().fetch()
 

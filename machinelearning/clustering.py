@@ -1,4 +1,4 @@
-__author__ = 'Petre'
+__author__ = 'igorpetrovski'
 
 from math import sqrt
 import heapq

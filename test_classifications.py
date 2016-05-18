@@ -1,9 +1,11 @@
 # encoding=utf-8
 
-import Utility
-import  naivebayes_classification
 from cPickle import Unpickler
 import math
+
+import Utility
+from machinelearning import naivebayes_classification
+
 
 def testNaiveBayes():
     counter = 0
