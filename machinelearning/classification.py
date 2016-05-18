@@ -2,6 +2,8 @@
 __author__ = 'Petre'
 
 
+# !!!! PETRE'S CLASSIFICATION !!!!
+
 import anydbm
 import cPickle
 from math import log10
@@ -11,6 +13,7 @@ from cPickle import Unpickler
 from random import random
 from math import exp
 import time
+import Utility
 
 
 #=======================================================================================================================
@@ -18,15 +21,6 @@ import time
 
 
 path = '/Users/igorpetrovski/Desktop/NEURAL_WEIGHTS'
-
-
-
-stopWords = set([u'сте', u'ве', u'ви', u'вие', u'вас', u'но', u'го', u'а', u'е', u'на', u'во', u'и', u'ни', u'ние', u'или',
-u'та', u'ма', u'ти', u'се', u'за', u'од', u'да', u'со', u'ќе', u'дека', u'што', u'не', u'ги', u'ја', u'јас',
-u'тие', u'тоа', u'таа', u'тој', u'мк', u'отсто', u'гр', u'мл', u'тв', u'ул', u'врз', u'сите', u'иако', u'друг', u'друга',
-u'при', u'цел', u'меѓу', u'околу', u'нив', u'кои', u'кога', u'поради', u'има', u'без', u'биле', u'она', u'кое', u'кај',
-u'овој', u'него', u'некои', u'оваа', u'веќе', u'оние', u'уште', u'може', u'меѓутоа'])
-
 
 
 
@@ -45,13 +39,13 @@ def extract(line):
             if word:
                 ww = "".join(word)
                 ww=ww.lower()
-                if ww not in stopWords:
+                if ww not in Utility.stopWords:
                     out.append(ww)
             word = []
     if word:
         ww = "".join(word)
         ww=ww.lower()
-        if ww not in stopWords:
+        if ww not in Utility.stopWords:
             out.append(ww)
 
     return out
@@ -94,7 +88,7 @@ def getWordCounts():
 # ======================================================================================================================
 
 
-def filterDocumtens ():
+def filterDocuments():
     docFile = open(path+"/data.txt")
     toWrite = open(path+"/filteredData.txt", 'w')
 
