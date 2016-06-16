@@ -112,25 +112,13 @@ sources = [
 
             Source(43, 'http://www.avtomagazin.com.mk/', ['http://www.avtomagazin.com.mk/avto-magazin.rss']), #PROVERENO, TEKSTOT SE ZEMA DOBRO
             Source(44, 'http://meta.mk/', ['http://meta.mk/feed/']), # PROVERENO, TEKSTOT SE ZEMA DOBRO
-
-
-
-            Source(45, 'http://slobodna.mk/', ['http://slobodna.mk/feed/']), #TEKOVNA PROVERKA
-
-
+            Source(45, 'http://slobodna.mk/', ['http://slobodna.mk/feed/']), #PROVERENO TEKSTOT SE ZEMA DOBRO (NEKOGAS LISTA I META DATA)
             Source(47, 'http://www.utrinski.mk/', ['http://www.utrinski.mk/rssgenerator/rss.aspx']), # PROVERENO, TEKSTOT SE ZEMA DOBRO (samo naslovot se povtoruva duplo)
-
-
             Source(48, 'http://kapital.mk/', ['http://kapital.mk/feed/']), # LOSH FEED
-
             Source(49, 'http://www.akademik.mk/', ['http://www.akademik.mk/feed/']),# PROVERENO, TEKSTOT SE ZEMA DOBRO
             Source(50, 'http://mk.rbth.com/', ['http://mk.rbth.com/xml/index.xml'], 'Руска реч'),# PROVERENO, TEKSTOT SE ZEMA DOBRO
-            Source(51, 'http://telma.com.mk/', ['http://telma.com.mk/rss.xml']), # PROVERENO, TEKSTOT SE ZEMA DOBRO
-
-
-            Source(52, 'http://kanal77.mk/', ['http://kanal77.mk/feed/']), # TEKOVNA PROVERKA
-
-
+            Source(51, 'http://telma.com.mk/', ['http://telma.com.mk/rss.xml'], 'Телма'), # PROVERENO, TEKSTOT SE ZEMA DOBRO
+            Source(52, 'http://kanal77.mk/', ['http://kanal77.mk/feed/']), # PROVERENO, TEKSTOT SE ZEMA DOBRO
             Source(53, 'http://24vesti.mk/', ['http://24vesti.mk/rss.xml']), # PROVERENO, TEKSTOT SE ZEMA DOBRO
             Source(54, 'http://marketing365.mk/', ['http://marketing365.mk/feed/']),# PROVERENO, TEKSTOT SE ZEMA DOBRO
             Source(55, 'http://maxim.mk/', ['http://maxim.mk/rss.xml']), # PROVERENO, TEKSTOT SE ZEMA DOBRO
@@ -174,21 +162,21 @@ fetch_text_specifications = {
                 'http://www.idividi.com.mk/rss.aspx':[0,-13],
                 'http://kurir.mk/feed/': [0,-5],
                 'http://www.avtomagazin.com.mk/avto-magazin.rss':[0,-23],
-                'http://slobodna.mk/feed/':[0,-16],
-
+                'http://slobodna.mk/feed/':{'tag_type':'div', 'attribute_type':'class', 'attribute_value':'entry clearfix'},
                 'http://meta.mk/feed/':[1,-14],
 
                 'http://maxim.mk/rss.xml':[0,-6],
                 'http://marketing365.mk/feed/':[0,-21],
                 'http://www.utrinski.mk/rssgenerator/rss.aspx': [3,-6],
                 'http://telma.com.mk/rss.xml':[0,-1],
-                'http://kanal77.mk/feed/':[1,-4],
+                'http://kanal77.mk/feed/':{'tag_type':'div', 'attribute_type':'class', 'attribute_value':'entry', 'nested_tag_type':'p',
+                                           'nested_attribute_type':'class', 'nested_attribute_value': None},
                 'http://www.akademik.mk/feed/':[0,-1],
                 'http://mk.rbth.com/xml/index.xml':[0,-2],
                 'http://www.avtomagazin.com.mk/avto-magazin.rss':{'tag_type':'section', 'attribute_type':'class', 'attribute_value':'link-arrow'},
                 'http://24vesti.mk/rss.xml':{'tag_type':'div', 'attribute_type':'class', 'attribute_value':'main-content',
-                                            'nested_tag_type':'div', 'nested_attribute_type':'class', 'nested_attribute_value':'content'}
-
+                                            'nested_tag_type':'div', 'nested_attribute_type':'class', 'nested_attribute_value':'content',
+                                             'limit':1}
                 }
 
 

@@ -181,7 +181,16 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
                             nested_tag_type = specifications['nested_tag_type']
                             nested_attr_type = specifications['nested_attribute_type']
                             nested_attr_value = specifications['nested_attribute_value']
-                            sections = [section.find(nested_tag_type, { nested_attr_type:  nested_attr_value}) for section in sections]
+                            limit = specifications.get('limit', 1000)
+
+                            new_sections = []
+
+                            for section in sections:
+                                new_sections.extend(section.findAll(nested_tag_type,{ nested_attr_type:  nested_attr_value}, limit=limit))
+
+                            sections = new_sections
+
+
 
                         for section in sections:
                             text += section.text
@@ -377,7 +386,11 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
                         attr_type = specifications['attribute_type']
                         attr_value = specifications['attribute_value']
 
+                        #feedback += 'tag_type: %s attr_type: %s attr_value: %s\n' % (tag_type, attr_type, attr_value)
+
                         sections = innerSoup.findAll(tag_type, {attr_type: attr_value})
+
+                        #feedback += 'tags size: %d\n' % len(sections)
 
 
                         #if we need to go deeper
@@ -385,7 +398,16 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
                             nested_tag_type = specifications['nested_tag_type']
                             nested_attr_type = specifications['nested_attribute_type']
                             nested_attr_value = specifications['nested_attribute_value']
-                            sections = [section.find(nested_tag_type, { nested_attr_type:  nested_attr_value}) for section in sections]
+                            limit = specifications.get('limit', 1000)
+
+                            new_sections = []
+
+                            for section in sections:
+                                new_sections.extend(section.findAll(nested_tag_type,{ nested_attr_type:  nested_attr_value}, limit=limit))
+
+                            sections = new_sections
+
+
 
 
                         for section in sections:

@@ -1,7 +1,6 @@
-machinelearning/logreg_vectorizer.pkl
-machinelearning/logreg.pkl
 machinelearning/vocabulary50000.txt
 machinelearning/vocabulary100000.txt
+*.txt
 .DS_Store
 bs4/.DS_Store
 lib/flask/testsuite/test_apps/lib/python2.5/.DS_Store
