@@ -7,34 +7,13 @@ from bs4 import BeautifulSoup
 from model.NewsPost import NewsPost
 import Utility
 from google.appengine.ext import ndb
-#from machinelearning.logistic_regression import get_persisted_model
-#from machinelearning.logistic_regression import get_persisted_vectorizer
 
-# rss-feeds:
-
-# 1.    http://vecer.mk/rss.xml
-# 2.    http://puls24.mk/rss-feed
-# 3.    http://www.crnobelo.com/?format=feed&type=rss
-# 4.    http://sitel.mk/rss.xml
-# 5.    http://www.telegraf.mk/telegrafrss
-# 6.    http://www.femina.mk/rss
-# 7.    http://kurir.mk/feed/
-# 8.    http://press24.mk/taxonomy/term/3/feed
-# 9.    http://press24.mk/taxonomy/term/7/feed
-# 10.   http://novatv.mk/rss
-# 11.
-# 12.
-# 13.
-# 14.
-# 15.
-# 16.
-# 17.
-# 18.
-# 19.
-# 20.
+from dateutil.parser import *
+import datetime
 
 
-
+#needed for retrieving the pubDate of a news post
+epoch = datetime.datetime.utcfromtimestamp(0)
 
 
 sources_config = {#'http://kurir.mk/feed/': [-1],
@@ -106,8 +85,25 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
                 #link to the news
                 link_url = item.find('link').string
 
+
+
                 feedback += 'title: %s\n' % title
                 feedback += 'link_url: %s\n' % link_url
+
+                pub_date = item.find('pubDate')
+
+                if pub_date is not None:
+                    pub_date = pub_date.string
+                    datetime_obj = parse(pub_date)
+
+                    feedback += 'pub_date: %s\n' % (datetime_obj.strftime('%B %d %Y %H:%M'))
+
+                    date_milli = (datetime_obj - epoch).total_seconds() * 1000
+                    feedback += 'milli: %f\n' % date_milli
+
+                else:
+                    feedback += 'pub_date: None\n'
+
 
                 same_news_posts = NewsPost.query(NewsPost.url == link_url).fetch()
 
@@ -346,6 +342,21 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
                 link_url = item.find('link').string
                 feedback += 'title: %s\n' % title.strip()
                 feedback += 'link_url: %s\n' % link_url
+
+                pub_date = item.find('pubdate')
+
+                if pub_date is not None:
+                    pub_date = pub_date.string
+                    datetime_obj = parse(pub_date, ignoretz=True)
+
+                    feedback += 'pub_date: %s\n' % (datetime_obj.strftime('%B %d %Y %H:%M'))
+
+                    date_milli = (datetime_obj - epoch).total_seconds() * 1000.0
+                    feedback += 'milli: %f\n' % date_milli
+
+                else:
+                    feedback += 'pub_date: None\n'
+
                 text = ''
 
 

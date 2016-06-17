@@ -147,10 +147,10 @@ fetch_text_specifications = {
 
                 'http://www.sport.com.mk/rssgenerator/rss.aspx': [1],
                 'http://reporter.mk/feed/':[3,-10],
-                'http://tocka.com.mk/rss.php':{'tag_type':'div', 'attribute_type':'id', 'attribute_value':'sodrzina_vest',
-                                               },
+                'http://tocka.com.mk/rss.php':{'tag_type':'div', 'attribute_type':'id', 'attribute_value':'sodrzina_vest'},
                 'http://www.femina.mk/rss':[0,-7],
-                'http://feeds.feedburner.com/offnetmk':[0,-10],
+                'http://feeds.feedburner.com/offnetmk':{'tag_type':'div', 'attribute_type':'class',
+                                                        'attribute_value':['sodrzhina-full', 'voved']},
                 'http://lokalno.mk/feed/': [0,-9],
                 'http://it.mk/feed/':[2,-28],
                 'http://netpress.com.mk/feed/': [0,-1],
@@ -180,7 +180,8 @@ fetch_text_specifications = {
                 'http://www.avtomagazin.com.mk/avto-magazin.rss':{'tag_type':'section', 'attribute_type':'class', 'attribute_value':'link-arrow'},
                 'http://24vesti.mk/rss.xml':{'tag_type':'div', 'attribute_type':'class', 'attribute_value':'main-content',
                                             'nested_tag_type':'div', 'nested_attribute_type':'class', 'nested_attribute_value':'content',
-                                             'limit':1}
+                                             'limit':1},
+                'http://republika.mk/?feed=rss2':{'tag_type':'div', 'attribute_type':'id', 'attribute_value':'article_text'}
                 }
 
 

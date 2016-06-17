@@ -1,6 +1,10 @@
 #encoding=utf-8
 __author__ = 'igorpetrovski'
 
+from dateutil.parser import *
+import datetime
+
+
 
 class BaseClass:
 
@@ -52,6 +56,26 @@ def printType(iterable):
         else:
             print 'It is not list. It is not dict. It is a: '
             print type(iterable)
+
+
+def parse_time(input_string):
+
+    epoch = datetime.datetime.utcfromtimestamp(0)
+
+    result = parse(input_string,ignoretz=True)
+
+    print result
+    print type(result)
+    print (result-epoch).total_seconds()
+
+    str = ''
+    str += result.strftime('%B %d %Y %H:%M')
+    print 'str: %s' % str
+    #1466176318000
+
+input_string = 'Fri, 17 Jun 2016 17:11:58 +0000'
+
+parse_time(input_string)
 
 
 
