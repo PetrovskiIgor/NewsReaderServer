@@ -90,18 +90,20 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
                 feedback += 'title: %s\n' % title
                 feedback += 'link_url: %s\n' % link_url
 
-                pub_date = item.find('pubDate')
+                pub_date = item.find('pubdate')
 
                 if pub_date is not None:
                     pub_date = pub_date.string
-                    datetime_obj = parse(pub_date)
+                    datetime_obj = parse(pub_date, ignoretz=True)
 
                     feedback += 'pub_date: %s\n' % (datetime_obj.strftime('%B %d %Y %H:%M'))
 
-                    date_milli = (datetime_obj - epoch).total_seconds() * 1000
+                    date_milli = (datetime_obj - epoch).total_seconds() * 1000.0
+                    pub_date = date_milli
                     feedback += 'milli: %f\n' % date_milli
 
                 else:
+                    pub_date = 0
                     feedback += 'pub_date: None\n'
 
 
@@ -233,7 +235,7 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
                 newsPost = NewsPost(parent=ndb.Key('NewsPost', link_url or "*notitle*"), url = link_url, host_page = web_page_url,
                                     title = title, dictWords = dict_news, numWords = num_words, words = total_words ,
                                     source_id = source_object.id, source_url = source_object.url,
-                                    img_url = img_url)
+                                    img_url = img_url, pub_date = pub_date)
 
                 newsPost.calculate_tf_idf(dict_IDF)
                 newsPost.put()

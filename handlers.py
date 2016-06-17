@@ -866,6 +866,39 @@ def get_news_posts_by_page():
 
     return Response(str, mimetype='text/plain')
 
+@app.route('/get_by_page_json')
+def get_posts_by_page():
+    str = ''
+    url_page = request.args.get('page_url')
+    str += 'url_page: %s\n' % url_page
+    news_posts = NewsPost.query(NewsPost.source_url == url_page).fetch()
+    str += 'num news posts: %d\n' % len(news_posts)
+
+
+
+    light_version = []
+    for np in  news_posts:
+        newNews = NewsPostClient(url = np.url, host_page = np.host_page, title = np.title, numWords = np.numWords, source_id = np.source_id,
+                                         source_url = np.source_url,img_url = np.img_url, pub_date = np.pub_date)
+        light_version.append(newNews)
+
+    obj = {'listNewsPosts' :[n.serialize() for n in light_version]}
+
+    result = json.dumps(obj, ensure_ascii=True)
+
+    return Response(result, mimetype='text/plain')
+
+    #result = json.dumps(obj, ensure_ascii=True)
+
+    #return Response(result, mimetype='text/plain')
+
+
+
+
+
+    #return Response(str, mimetype='text/plain')
+
+
 @app.route('/fetch_text')
 def fetchText():
 

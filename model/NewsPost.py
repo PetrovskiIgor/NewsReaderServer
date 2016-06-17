@@ -32,6 +32,8 @@ class NewsPost(ndb.Model):
     #the url to the image associated with the news post
     img_url = ndb.StringProperty()
 
+    pub_date = ndb.IntegerProperty()
+
     #def __init__(self, host_page, url, title, dictWords, numWords):
     #    self.host_page = host_page
     #    self.url = url

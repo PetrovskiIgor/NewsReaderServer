@@ -16,6 +16,7 @@ class NewsPostClient(ndb.Model):
     source_url = ndb.StringProperty()
 
     img_url = ndb.StringProperty()
+    pub_date = ndb.IntegerProperty()
 
 
     def serialize(self):
@@ -26,6 +27,7 @@ class NewsPostClient(ndb.Model):
             "source_id":    self.source_id,
             "source_url":   self.source_url,
             "img_url":      self.img_url,
+            "pub_date":     self.pub_date if self.pub_date is not None else 0
         }
 
 
