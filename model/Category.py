@@ -5,11 +5,12 @@ from google.appengine.ext import ndb
 
 class Category(ndb.Model):
 
-    def __init__(self, id, name, title):
+    def __init__(self, id, name, title, imgUrl=''):
 
         self.id = id
         self.name = name
         self.title = title
+        self.imgUrl = imgUrl
 
 
     def serialize(self):
@@ -17,5 +18,6 @@ class Category(ndb.Model):
             'id':   self.id,
             'name':  self.name,
             'title': self.title,
+            'imgUrl': self.imgUrl
 
         }

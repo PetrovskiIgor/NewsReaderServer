@@ -44,15 +44,15 @@ stop_words = set(['сте', 'ве', 'ви', 'вие', 'вас', 'но', 'го', 
 #categories
 
 categories = [
-                Category(0,'MAKEDONIJA', 'Македонија'),
-                Category(1,'SVET', 'Свет'),
-                Category(2,'EKONOMIJA', 'Економија'),
+                Category(0,'MAKEDONIJA', 'Македонија', 'http://img.freeflagicons.com/thumb/round_icon/macedonia/macedonia_640.png'),
+                Category(1,'SVET', 'Свет', 'http://www.fordesigner.com/imguploads/Image/cjbc/zcool/png20080526/1211766291.png'),
+                Category(2,'EKONOMIJA', 'Економија', 'http://static1.squarespace.com/static/54bebe07e4b0dc5217eebd19/t/5512f5a2e4b008b87901036f/1427146265321/icon-graph.png'),
                 Category(3,'SCENA', 'Сцена'),
                 Category(4,'ZIVOT', 'Живот'),
                 Category(5,'KULTURA', 'Култура'),
-                Category(6,'ZDRAVJE', 'Здравје'),
-                Category(7,'TEHNOLOGIJA', 'Технологија'),
-                Category(8,'FUDBAL', 'Фудбал'),
+                Category(6,'ZDRAVJE', 'Здравје', 'http://www.surelineproductions.com/uploads/2/2/9/5/22952802/4826818.png'),
+                Category(7,'TEHNOLOGIJA', 'Технологија', 'http://www.fancyicons.com/free-icons/101/dragon-ball/png/256/dragonball3_256.png'),
+                Category(8,'FUDBAL', 'Фудбал', 'http://www.freeiconspng.com/uploads/soccer-ball-ico-9.png'),
                 Category(9,'KOSARKA', 'Кошарка'),
                 Category(10,'RAKOMET', 'Ракомет'),
                 Category(11,'TENIS', 'Тенис')
