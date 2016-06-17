@@ -153,6 +153,9 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
 
                 text = ''
 
+                for script in innerSoup(['script', 'style']):
+                    script.extract()
+
                 if web_page_url in Utility.fetch_text_specifications:
 
                     specifications = Utility.fetch_text_specifications[web_page_url]
@@ -193,6 +196,8 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
 
 
                         for section in sections:
+
+
                             text += section.text
 
 
@@ -364,6 +369,9 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
                 innerSoup = BeautifulSoup(link_content)
 
 
+                for script in innerSoup(['script', 'style']):
+                    script.extract()
+
 
                 if rss_feed_url in Utility.fetch_text_specifications:
 
@@ -381,7 +389,6 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
                         for p in innerSoup.findAll('p')[start:end]:
                             text += p.text
                     else:
-
                         tag_type = specifications['tag_type']
                         attr_type = specifications['attribute_type']
                         attr_value = specifications['attribute_value']
@@ -399,11 +406,13 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
                             nested_attr_type = specifications['nested_attribute_type']
                             nested_attr_value = specifications['nested_attribute_value']
                             limit = specifications.get('limit', 1000)
+                            recursive = specifications.get('recursive', True)
 
                             new_sections = []
 
                             for section in sections:
-                                new_sections.extend(section.findAll(nested_tag_type,{ nested_attr_type:  nested_attr_value}, limit=limit))
+                                new_sections.extend(section.findAll(nested_tag_type,{ nested_attr_type:  nested_attr_value}, limit=limit,
+                                                                    recursive=recursive))
 
                             sections = new_sections
 
@@ -411,6 +420,7 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
 
 
                         for section in sections:
+                            feedback += 'tag name: %s\n' % section.name
                             text += section.text
 
 
