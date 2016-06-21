@@ -6,6 +6,7 @@ class BasicClassificator:
 
 
     def __init__(self, categories):
+
         self.ind_to_cat = []
         self.cat_to_ind = {}
 

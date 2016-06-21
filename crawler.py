@@ -87,6 +87,7 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
 
 
 
+
                 feedback += 'title: %s\n' % title
                 feedback += 'link_url: %s\n' % link_url
 
@@ -168,7 +169,7 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
 
 
                         for p in innerSoup.findAll('p')[start:end]:
-                            text += p.text
+                            text += '%s ' % p.text
                     else:
 
                         tag_type = specifications['tag_type']
@@ -194,11 +195,11 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
 
 
                         for section in sections:
+                            text += '%s ' % section.text
 
 
-                            text += section.text
 
-
+                description = text[:min(100, len(text))]
 
                 total_words.extend(Utility.getWords(text))
 
@@ -235,7 +236,7 @@ def getNewsPosts(source_object, web_page_url, dict_IDF):
                 newsPost = NewsPost(parent=ndb.Key('NewsPost', link_url or "*notitle*"), url = link_url, host_page = web_page_url,
                                     title = title, dictWords = dict_news, numWords = num_words, words = total_words ,
                                     source_id = source_object.id, source_url = source_object.url,
-                                    img_url = img_url, pub_date = pub_date)
+                                    img_url = img_url, pub_date = pub_date, description = description)
 
                 newsPost.calculate_tf_idf(dict_IDF)
                 newsPost.put()
@@ -342,8 +343,16 @@ def parse_rss_feed(rss_feed_url, stop_after=None):
             try:
                 title   = item.find('title').string
                 link_url = item.find('link').string
+                description_object = item.find('description')
+
+                description = ''
+
+                for p in BeautifulSoup(description_object.string).findAll('p'):
+                    description += '%s ' % p.text
+
                 feedback += 'title: %s\n' % title.strip()
                 feedback += 'link_url: %s\n' % link_url
+                feedback += 'description: %s\n' % description
 
                 pub_date = item.find('pubdate')
 

@@ -54,6 +54,75 @@ class NaiveBayes(BasicClassificator):
 
         return predictions
 
+def cross_validation(nf=10):
+
+    tuples = []
+    for line in open(Utility.path_dataset):
+
+        category, text = line.decode('utf-8').strip().split('\t')
+        tuples.append((category, text))
+
+    random.shuffle(tuples)
+
+
+    num_folds=nf
+    N = len(tuples)
+    total_score = 0
+    total_time = 0
+
+    for i in xrange(num_folds):
+
+        X, y = [], []
+
+        X_train, y_train = [], []
+        X_test, y_test = [], []
+
+
+        begin = i * N/num_folds
+        end = (i+1) * N/num_folds
+
+        ind = 0
+        for tuple in tuples:
+            category, text = tuple[0], tuple[1]
+            X.append(text)
+            y.append(category)
+
+            if begin <= ind and ind < end:
+               X_test.append(text)
+               y_test.append(category)
+            else:
+                X_train.append(text)
+                y_train.append(category)
+
+            ind += 1
+
+
+        print 'Read the dataset'
+        naive_bayes = NaiveBayes(y)
+
+        begin = time.time()
+        naive_bayes.train(X_train, y_train, vectorized=False)
+        end = time.time()
+
+        print '%d: %d seconds' % (i,end - begin)
+        total_time += (end-begin)
+
+        score = naive_bayes.test_score(X_test, y_test)
+        score_perc = score * 100
+
+        print '%d: Score: %.2f\n' % (i, score_perc)
+
+        total_score += score_perc
+
+
+    avg_score = total_score*1.0/num_folds
+    avg_time = (total_time*1.0)/num_folds
+    print 'Average score: %.2f' % avg_score
+    print 'Average training time: %.2f' % avg_time
+
+cross_validation(nf=10)
+
+"""
 
 X, y = [], []
 
@@ -81,7 +150,7 @@ for tuple in tuples:
     X.append(text)
     y.append(category)
 
-    if random.random() <= 0.1:
+    if random.random() <= 0.2:
        X_test.append(text)
        y_test.append(category)
     else:
@@ -94,7 +163,8 @@ naive_bayes = NaiveBayes(y)
 
 
 naive_bayes.train(X_train, y_train, vectorized=False)
-
+score = naive_bayes.test_score(X_test, y_test)
+print 'score: %.2f' % score
 #score = svm.test_score(X_test, y_test, vectorized=False)
 
 
@@ -115,4 +185,5 @@ print 'Num correct: %d out of %d' % (num_correct, len(predictions))
 print 'Percentage correct: %.2f' % (100.0*num_correct/len(predictions))
 
 #print digits_set.info
+"""
 

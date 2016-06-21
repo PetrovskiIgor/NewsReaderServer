@@ -34,6 +34,8 @@ class NewsPost(ndb.Model):
 
     pub_date = ndb.IntegerProperty()
 
+    description = ndb.StringProperty()
+
     #def __init__(self, host_page, url, title, dictWords, numWords):
     #    self.host_page = host_page
     #    self.url = url

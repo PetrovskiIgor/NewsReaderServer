@@ -79,33 +79,53 @@ random.shuffle(tuples)
 
 #tuples = tuples[:num_tuples]
 
-for tuple in tuples:
-    category, text = tuple[0], tuple[1]
-    X.append(text)
-    y.append(category)
+num_folds=10
+N = len(tuples)
+total_score = 0
 
-    if random.random() <= 0.35:
-       X_test.append(text)
-       y_test.append(category)
-    else:
-        X_train.append(text)
-        y_train.append(category)
+for i in xrange(num_folds):
+
+    begin = i * N/num_folds
+    end = (i+1) * N/num_folds
+
+    ind = 0
+    for tuple in tuples:
+        category, text = tuple[0], tuple[1]
+        X.append(text)
+        y.append(category)
+
+        if begin <= ind and ind < end:
+           X_test.append(text)
+           y_test.append(category)
+        else:
+            X_train.append(text)
+            y_train.append(category)
+
+        ind += 1
 
 
-print 'Read the dataset'
-logistic_regression = LogReg(y)
+    print 'Read the dataset'
+    logistic_regression = LogReg(y)
 
 
-logistic_regression.train(X_train, y_train, vectorized=False)
+    logistic_regression.train(X_train, y_train, vectorized=False)
 
-#score = svm.test_score(X_test, y_test, vectorized=False)
+    #score = svm.test_score(X_test, y_test, vectorized=False)
 
 
-#print 'The score is: %.2f' % score
+    #print 'The score is: %.2f' % score
 
-score = logistic_regression.test_score(X_test, y_test)
+    score = logistic_regression.test_score(X_test, y_test)
 
-print 'Score: %.2f' % score
+    score_perc = score * 100
+    print '%d: Score: %.2f\n' % (i, score_perc)
+
+    total_score += score_perc
+
+
+avg_score = total_score*1.0/num_folds
+
+print 'Average score: %.2f' % avg_score
 
 """
 num_correct = 0

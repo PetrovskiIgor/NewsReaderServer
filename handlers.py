@@ -165,7 +165,7 @@ def getClusters():
 
                 newNews = NewsPostClient(url = np.url, host_page = np.host_page, title = np.title, numWords = np.numWords, source_id = np.source_id,
                                          source_url = np.source_url,
-                                         img_url = np.img_url)
+                                         img_url = np.img_url, description = np.description)
 
                 feedback += 'created NewsPostClient'
                 listNews.append(newNews)
@@ -415,7 +415,7 @@ def getMYNews():
     newNews = []
 
     for n in news:
-        newObject = NewsPostClient(url = n.url,host_page = n.host_page,title = n.title)
+        newObject = NewsPostClient(url = n.url,host_page = n.host_page,title = n.title, description = n.description)
         newNews.append(newObject)
 
 
@@ -879,7 +879,7 @@ def get_posts_by_page():
     light_version = []
     for np in  news_posts:
         newNews = NewsPostClient(url = np.url, host_page = np.host_page, title = np.title, numWords = np.numWords, source_id = np.source_id,
-                                         source_url = np.source_url,img_url = np.img_url, pub_date = np.pub_date)
+                                         source_url = np.source_url,img_url = np.img_url, pub_date = np.pub_date, description = np.description)
         light_version.append(newNews)
 
     obj = {'listNewsPosts' :[n.serialize() for n in light_version]}

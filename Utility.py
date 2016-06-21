@@ -13,7 +13,7 @@ from model.Source import Source
 from model.Category import  Category
 
 
-training_file_path='/Users/igorpetrovski/Desktop/7 semestar/NLP/dataset-hw.txt'
+training_file_path='/Users/igorpetrovski/Desktop/Fakultet/7 semestar/NLP/dataset-hw.txt'
 categories_file_path='/Users/igorpetrovski/Desktop/NewsReaderServer/categories.txt'
 
 
@@ -44,18 +44,18 @@ stop_words = set(['сте', 'ве', 'ви', 'вие', 'вас', 'но', 'го', 
 #categories
 
 categories = [
-                Category(0,'MAKEDONIJA', 'Македонија', 'http://img.freeflagicons.com/thumb/round_icon/macedonia/macedonia_640.png'),
-                Category(1,'SVET', 'Свет', 'http://www.fordesigner.com/imguploads/Image/cjbc/zcool/png20080526/1211766291.png'),
-                Category(2,'EKONOMIJA', 'Економија', 'http://static1.squarespace.com/static/54bebe07e4b0dc5217eebd19/t/5512f5a2e4b008b87901036f/1427146265321/icon-graph.png'),
-                Category(3,'SCENA', 'Сцена'),
-                Category(4,'ZIVOT', 'Живот'),
-                Category(5,'KULTURA', 'Култура'),
-                Category(6,'ZDRAVJE', 'Здравје', 'http://www.surelineproductions.com/uploads/2/2/9/5/22952802/4826818.png'),
-                Category(7,'TEHNOLOGIJA', 'Технологија', 'http://www.fancyicons.com/free-icons/101/dragon-ball/png/256/dragonball3_256.png'),
-                Category(8,'FUDBAL', 'Фудбал', 'http://www.freeiconspng.com/uploads/soccer-ball-ico-9.png'),
-                Category(9,'KOSARKA', 'Кошарка'),
-                Category(10,'RAKOMET', 'Ракомет'),
-                Category(11,'TENIS', 'Тенис')
+                Category(0,'MAKEDONIJA', title='Македонија', imgUrl='https://doc-14-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/7kju035bftsor3bdaoffdp7dhs14032c/1466272800000/05927223757565951184/*/0B_Ady6W8AROOR3ZSeWZFYjVRYjg'),
+                Category(1,'SVET', title='Свет', imgUrl='https://doc-14-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/fu3mr23e95fjtt9s73sr9s2fsapdu9dk/1466272800000/05927223757565951184/*/0B_Ady6W8AROONVBvSkNTMjF6RXM'),
+                Category(2,'EKONOMIJA', title='Економија', imgUrl='https://doc-08-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/au19653q6edu19m7cq1dlfnjt7mfg12a/1466272800000/05927223757565951184/*/0B_Ady6W8AROOYlVGWDFTaFJFeU0'),
+                Category(3,'SCENA', title='Сцена', imgUrl='https://doc-04-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/6poc3gjlaiiif51gvtekk172n3hpp0k8/1466272800000/05927223757565951184/*/0B_Ady6W8AROOaEl6V3JrNU12aGc'),
+                Category(4,'ZIVOT', title='Живот', imgUrl='https://doc-0c-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/8169c509hpbd2ogqaorajsg69cle9n8l/1466272800000/05927223757565951184/*/0B_Ady6W8AROORE1ZN3hrV2VfV1E'),
+                Category(5,'KULTURA', title='Култура', imgUrl='https://doc-04-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/129j7mcjdbgjim3n5ue6beggtcfhebfo/1466272800000/05927223757565951184/*/0B_Ady6W8AROOVkFkRE83WUI4UXM'),
+                Category(6,'ZDRAVJE', title='Здравје', imgUrl='https://doc-00-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/5rqorhjc11k0uc93ap9b2e2dckfipt6i/1466272800000/05927223757565951184/*/0B_Ady6W8AROOWUVVSUQzQ1ZoVzQ'),
+                Category(7,'TEHNOLOGIJA', title='Технологија', imgUrl='https://doc-0g-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/um6go4s5migkjfij5nm1f9dvom0b28bp/1466272800000/05927223757565951184/*/0B_Ady6W8AROOSnM5TFRXZlBscE0'),
+                Category(8,'FUDBAL', title='Фудбал', imgUrl='https://doc-0c-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/hrfm918d5v2238nkff5a7csg4qictedk/1466272800000/05927223757565951184/*/0B_Ady6W8AROOZXpZUG9HZFNDLVk'),
+                Category(9,'KOSARKA', title='Кошарка', imgUrl='https://doc-10-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/k32nuatls1vg3cvj0seash7bhuciagik/1466272800000/05927223757565951184/*/0B_Ady6W8AROOWWxtTm5ocFUwYnM'),
+                Category(10,'RAKOMET', title='Ракомет', imgUrl='https://doc-0k-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/qunsh2q0aqkfs64aluf7c8tg05erkvcf/1466272800000/05927223757565951184/*/0B_Ady6W8AROOdWlIRDFVNE4zV2s'),
+                Category(11,'TENIS', title='Тенис', imgUrl='https://doc-14-5o-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/t18fk42kf55eiru3o5p4daq3119m1isc/1466272800000/05927223757565951184/*/0B_Ady6W8AROOMWppU09pRndEbUE')
 
 ]
 
@@ -186,7 +186,7 @@ fetch_text_specifications = {
 
 
 str_idf_dict = 'dict_idf'
-path_dataset = '/Users/igorpetrovski/Desktop/7 semestar/NLP/dataset-hw.txt'
+path_dataset = '/Users/igorpetrovski/Desktop/Fakultet/7 semestar/NLP/dataset-hw.txt'
 
 #function that for a given text (string) returns a list of words contained in that text
 
